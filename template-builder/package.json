@@ -1,0 +1,19 @@
+{
+  "name": "htmx-framework",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "NODE_ENV=production bun test"
+  },
+  "devDependencies": {
+    "@types/minimist": "^1.2.4",
+    "bun-types": "latest",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {},
+  "dependencies": {
+    "jsxte": "^3.1.6",
+    "minimist": "^1.2.8",
+    "prettier": "^3.0.3"
+  }
+}

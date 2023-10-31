@@ -1,0 +1,279 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`build correctly builds html files 1`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h1>Home</h1>
+      <a href="/home/sub1/sub2" hx-target="s1"></a>
+      <div id="s1"></div>
+    </div>
+  </body>
+</html>
+"
+`;
+
+exports[`build correctly builds html files 2`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h1>About</h1>
+    </div>
+  </body>
+</html>
+"
+`;
+
+exports[`build correctly builds html files 3`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h2>Products</h2>
+      <a href="/products/1" hx-target="products">Open 1</a>
+      <a href="/products/2" hx-target="products">Open 2</a>
+      <a href="/products/3" hx-target="products">Open 3</a>
+      <div id="products"></div>
+    </div>
+  </body>
+</html>
+"
+`;
+
+exports[`build correctly builds html files 4`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h1>Home</h1>
+      <a href="/home/sub1/sub2" hx-target="s1"></a>
+      <div id="s1">
+        <h2>Sub1</h2>
+        <a href="/home/sub1/sub2" hx-target="s2"></a>
+        <div id="s2"></div>
+      </div>
+    </div>
+  </body>
+</html>
+"
+`;
+
+exports[`build correctly builds html files 5`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h1>Home</h1>
+      <a href="/home/sub1/sub2" hx-target="s1"></a>
+      <div id="s1">
+        <h2>Sub1</h2>
+        <a href="/home/sub1/sub2" hx-target="s2"></a>
+        <div id="s2">
+          <h3>Sub2</h3>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+"
+`;
+
+exports[`build correctly builds html files 6`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h2>Products</h2>
+      <a href="/products/1" hx-target="products">Open 1</a>
+      <a href="/products/2" hx-target="products">Open 2</a>
+      <a href="/products/3" hx-target="products">Open 3</a>
+      <div id="products">
+        <span> Product 1 </span>
+      </div>
+    </div>
+  </body>
+</html>
+"
+`;
+
+exports[`build correctly builds html files 7`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h2>Products</h2>
+      <a href="/products/1" hx-target="products">Open 1</a>
+      <a href="/products/2" hx-target="products">Open 2</a>
+      <a href="/products/3" hx-target="products">Open 3</a>
+      <div id="products">
+        <span> Product 2 </span>
+      </div>
+    </div>
+  </body>
+</html>
+"
+`;
+
+exports[`build correctly builds html files 8`] = `
+"<html>
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li>
+          <a href="/home" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/about" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products" hx-target="root">Home</a>
+        </li>
+        <li>
+          <a href="/products/1" hx-target="root">Home</a>
+        </li>
+      </ul>
+    </nav>
+    <div id="root">
+      <h2>Products</h2>
+      <a href="/products/1" hx-target="products">Open 1</a>
+      <a href="/products/2" hx-target="products">Open 2</a>
+      <a href="/products/3" hx-target="products">Open 3</a>
+      <div id="products">
+        <span> Product 3 </span>
+      </div>
+    </div>
+  </body>
+</html>
+"
+`;
