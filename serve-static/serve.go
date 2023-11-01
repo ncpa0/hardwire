@@ -23,6 +23,27 @@ type StaticFile struct {
 
 var staticFiles []*StaticFile = []*StaticFile{}
 
+func detectContentType(filepath string, content []byte) string {
+	httpDet := http.DetectContentType(content)
+
+	if httpDet == "text/plain" {
+		switch path.Ext(filepath) {
+		case ".html":
+			return "text/html"
+		case ".css":
+			return "text/css"
+		case ".js":
+			return "text/javascript"
+		case ".json":
+			return "application/json"
+		case ".xml":
+			return "application/xml"
+		}
+	}
+
+	return httpDet
+}
+
 func (f *StaticFile) Revalidate() error {
 	// check if the file has changed since last time
 	// and reload it if it has
@@ -52,7 +73,7 @@ func (f *StaticFile) Revalidate() error {
 	f.Etag = utils.HashBytes(buff)
 	f.LastModifiedAt = &modTime
 	f.LastModifiedAtRFC = modTime.Format(http.TimeFormat)
-	f.ContentType = http.DetectContentType(buff)
+	f.ContentType = detectContentType(f.Path, buff)
 
 	return nil
 }
@@ -76,7 +97,7 @@ func getStaticFile(filepath string) ([]byte, string, *time.Time, error) {
 	}
 
 	modTime := info.ModTime()
-	return buff, http.DetectContentType(buff), &modTime, err
+	return buff, detectContentType(filepath, buff), &modTime, err
 }
 
 type StaticResponse struct {
