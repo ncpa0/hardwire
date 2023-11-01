@@ -15,14 +15,17 @@ import (
 	"golang.org/x/net/html"
 )
 
-var ENTRYPOINT = utils.GetEnv("PAGE_ENTRYPOINT", "./pages/index.tsx")
-var VIEWS = utils.GetEnv("VIEWS_DIR", "./")
-var STATIC_DIR = utils.GetEnv("STATIC_DIR", "./static")
+var ENTRYPOINT = utils.GetEnv("PAGE_ENTRYPOINT", "pages/index.tsx")
+var VIEWS = utils.GetEnv("VIEWS_DIR", ".")
+var STATIC_DIR = utils.GetEnv("STATIC_DIR", "static")
 var STATIC_URL = utils.GetEnv("STATIC_URL", "/static")
 var viewRegistry = views.NewViewRegistry()
 
-func SetDebugMode(debugMode bool) {
-	templatebuilder.DebugMode = debugMode
+var debugMode = false
+
+func SetDebugMode(dm bool) {
+	debugMode = dm
+	templatebuilder.DebugMode = dm
 }
 
 func loadViews() error {
@@ -37,6 +40,9 @@ func loadViews() error {
 		return err
 	}
 
+	if debugMode {
+		fmt.Printf("Loading view from %s\n", viewsFullPath)
+	}
 	err = utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
 		for _, file := range files {
 			ext := path.Ext(file)
@@ -47,10 +53,16 @@ func loadViews() error {
 
 			fullPath := path.Join(root, file)
 			relToView := fullPath[len(viewsFullPath):]
-			view, err := views.NewView(VIEWS, relToView)
+			view, err := views.NewView(viewsFullPath, relToView)
 			if err != nil {
 				return err
 			}
+
+			if debugMode {
+				fmt.Printf("Loading view from file %s\n", file)
+				fmt.Printf("ROOT: %s PATH: %s", viewsFullPath, relToView)
+			}
+
 			viewRegistry.Register(view)
 		}
 
@@ -87,6 +99,9 @@ func Start(e *echo.Echo, port string) error {
 	})
 
 	viewRegistry.ForEach(func(view *views.View) {
+		if debugMode {
+			fmt.Printf("Registering view %s\n", view.GetFilepath())
+		}
 		e.GET(view.GetFilepath(), func(c echo.Context) error {
 			selector := c.Request().Header.Get("HX-Target")
 
