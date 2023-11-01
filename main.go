@@ -31,7 +31,6 @@ func loadViews() error {
 
 	err := templatebuilder.BuildPages(ENTRYPOINT, viewsFullPath)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -57,7 +56,6 @@ func loadViews() error {
 
 	if err != nil {
 		fmt.Println("Error loading views.")
-		fmt.Println(err)
 		return err
 	}
 

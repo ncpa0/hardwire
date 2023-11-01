@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-//go:embed node_modules/jsxte node_modules/minimist node_modules/prettier src bunfig.toml
+//go:embed src bunfig.toml node_modules/jsxte node_modules/minimist node_modules/prettier
 var vfs embed.FS
 var DebugMode = false
 
