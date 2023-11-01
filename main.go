@@ -15,17 +15,25 @@ import (
 	"golang.org/x/net/html"
 )
 
+type Configuration struct {
+	StripExtension bool
+	DebugMode      bool
+}
+
 var ENTRYPOINT = utils.GetEnv("PAGE_ENTRYPOINT", "pages/index.tsx")
 var VIEWS = utils.GetEnv("VIEWS_DIR", ".")
 var STATIC_DIR = utils.GetEnv("STATIC_DIR", "static")
 var STATIC_URL = utils.GetEnv("STATIC_URL", "/static")
 var viewRegistry = views.NewViewRegistry()
 
-var debugMode = false
+var conf *Configuration = &Configuration{
+	StripExtension: true,
+	DebugMode:      false,
+}
 
-func SetDebugMode(dm bool) {
-	debugMode = dm
-	templatebuilder.DebugMode = dm
+func Configure(config *Configuration) {
+	conf = config
+	templatebuilder.DebugMode = config.DebugMode
 }
 
 func loadViews() error {
@@ -40,7 +48,7 @@ func loadViews() error {
 		return err
 	}
 
-	if debugMode {
+	if conf.DebugMode {
 		fmt.Printf("Loading view from %s\n", viewsFullPath)
 	}
 	err = utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
@@ -58,9 +66,9 @@ func loadViews() error {
 				return err
 			}
 
-			if debugMode {
+			if conf.DebugMode {
 				fmt.Printf("Loading view from file %s\n", file)
-				fmt.Printf("ROOT: %s PATH: %s", viewsFullPath, relToView)
+				fmt.Printf("ROOT: %s PATH: %s\n", viewsFullPath, relToView)
 			}
 
 			viewRegistry.Register(view)
@@ -88,33 +96,67 @@ func renderNode(c echo.Context, node *html.Node) error {
 	return c.HTML(http.StatusOK, b.String())
 }
 
+func createRouteHandler(view *views.View) func(c echo.Context) error {
+	if conf.DebugMode {
+		return func(c echo.Context) error {
+			fmt.Printf("Received request for %s\n", c.Request().URL)
+			selector := c.Request().Header.Get("HX-Target")
+
+			if selector != "" {
+				fmt.Printf("Applying html selector: %s\n", selector)
+				child := view.QuerySelector("#" + selector)
+
+				if !child.IsNil() {
+					err := renderNode(c, child.Get())
+					if err != nil {
+						fmt.Println("Rendering the node has failed.")
+					}
+					return err
+				}
+			}
+
+			err := renderNode(c, view.ToNode())
+			if err != nil {
+				fmt.Println("Rendering the node has failed.")
+			}
+			return err
+		}
+	}
+
+	return func(c echo.Context) error {
+		selector := c.Request().Header.Get("HX-Target")
+
+		if selector != "" {
+			child := view.QuerySelector("#" + selector)
+
+			if !child.IsNil() {
+				return renderNode(c, child.Get())
+			}
+		}
+
+		return renderNode(c, view.ToNode())
+	}
+}
+
 func Start(e *echo.Echo, port string) error {
 	err := loadViews()
 	if err != nil {
 		return err
 	}
 
-	e.GET("/", func(c echo.Context) error {
-		return c.Redirect(http.StatusPermanentRedirect, "/index.html")
-	})
-
 	viewRegistry.ForEach(func(view *views.View) {
-		if debugMode {
-			fmt.Printf("Registering view %s\n", view.GetFilepath())
+		var routePath string = view.GetFilepath()
+		if !path.IsAbs(routePath) {
+			routePath = "/" + view.GetFilepath()
 		}
-		e.GET(view.GetFilepath(), func(c echo.Context) error {
-			selector := c.Request().Header.Get("HX-Target")
+		if conf.StripExtension {
+			routePath = routePath[:len(routePath)-len(path.Ext(routePath))]
+		}
 
-			if selector != "" {
-				child := view.QuerySelector("#" + selector)
-
-				if !child.IsNil() {
-					return renderNode(c, child.Get())
-				}
-			}
-
-			return renderNode(c, view.ToNode())
-		})
+		if conf.DebugMode {
+			fmt.Printf("Adding new route: %s\n", routePath)
+		}
+		e.GET(view.GetFilepath(), createRouteHandler(view))
 	})
 
 	e.Static(STATIC_URL, STATIC_DIR)
