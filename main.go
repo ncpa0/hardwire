@@ -16,19 +16,37 @@ import (
 )
 
 type Configuration struct {
+	// When enabled, the `.html` extension will be stripped from the URL pathnames.
 	StripExtension bool
-	DebugMode      bool
+	// When enabled, the server will print debug information to the console.
+	DebugMode bool
+	// The entrypoint file containing the JSX pages used to generate the views html files.
+	//
+	// Defaults to `index.tsx`.
+	Entrypoint string
+	// The directory to which output the generated html files, and from which those will be hosted.
+	//
+	// Defaults to `views`.
+	ViewsDir string
+	// The directory to which output the static files, and from which those will be hosted.
+	//
+	// Defaults to `static`.
+	StaticDir string
+	// The URL path from under which the static files will be hosted.
+	//
+	// Defaults to `/static`.
+	StaticURL string
 }
 
-var ENTRYPOINT = utils.GetEnv("PAGE_ENTRYPOINT", "pages/index.tsx")
-var VIEWS = utils.GetEnv("VIEWS_DIR", ".")
-var STATIC_DIR = utils.GetEnv("STATIC_DIR", "static")
-var STATIC_URL = utils.GetEnv("STATIC_URL", "/static")
 var viewRegistry = views.NewViewRegistry()
 
 var conf *Configuration = &Configuration{
 	StripExtension: true,
 	DebugMode:      false,
+	Entrypoint:     "index.tsx",
+	ViewsDir:       "views",
+	StaticDir:      "static",
+	StaticURL:      "/static",
 }
 
 func Configure(config *Configuration) {
@@ -38,12 +56,12 @@ func Configure(config *Configuration) {
 
 func loadViews() error {
 	wd, _ := os.Getwd()
-	viewsFullPath := VIEWS
+	viewsFullPath := conf.ViewsDir
 	if !path.IsAbs(viewsFullPath) {
 		viewsFullPath = path.Join(wd, viewsFullPath)
 	}
 
-	err := templatebuilder.BuildPages(ENTRYPOINT, viewsFullPath, STATIC_DIR)
+	err := templatebuilder.BuildPages(conf.Entrypoint, viewsFullPath, conf.StaticDir, conf.StaticURL)
 	if err != nil {
 		return err
 	}
@@ -160,9 +178,9 @@ func Start(e *echo.Echo, port string) error {
 	})
 
 	if conf.DebugMode {
-		fmt.Printf("Serving static files at the following URL: %s from directory: %s\n", STATIC_URL, STATIC_DIR)
+		fmt.Printf("Serving static files at the following URL: %s from directory: %s\n", conf.StaticURL, conf.StaticDir)
 	}
-	e.Static(STATIC_URL, STATIC_DIR)
+	e.Static(conf.StaticURL, conf.StaticDir)
 
 	return e.Start(port)
 }

@@ -58,7 +58,7 @@ func extractDir(dirpath string, to string) error {
 	return nil
 }
 
-func BuildPages(pagesDir string, outDir string, staticDir string) error {
+func BuildPages(pagesDir string, outDir string, staticDir string, staticUrl string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -100,7 +100,15 @@ func BuildPages(pagesDir string, outDir string, staticDir string) error {
 		return err
 	}
 
-	cmd := exec.Command("bun", "--config="+bunConfigFile, binFile, "build", "--src", pagesDir, "--outdir", outDir, "--staticdir", staticDir)
+	cmd := exec.Command(
+		"bun",
+		"--config="+bunConfigFile,
+		binFile, "build",
+		"--src", pagesDir,
+		"--outdir", outDir,
+		"--staticdir", staticDir,
+		"--staticurl", staticUrl,
+	)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
