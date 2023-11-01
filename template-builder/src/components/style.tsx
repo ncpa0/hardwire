@@ -1,6 +1,7 @@
 import { CompressOptions, MinifyOptions, minify as cssMinify } from "csso";
 import type { ComponentApi } from "jsxte";
 import path from "node:path";
+import { builderCtx } from "../contexts";
 
 export type StyleProps =
   | {
@@ -24,6 +25,8 @@ export type StyleProps =
     };
 
 export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
+  const builder = componentApi.ctx.getOrFail(builderCtx);
+
   const options: MinifyOptions & CompressOptions = {};
   let filepath: string;
   let stylesheet: string;
@@ -33,7 +36,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
     stylesheet = await Bun.file(filepath).text();
   } else if (props.package) {
     filepath = props.package!;
-    const modulePath = await Bun.resolve(props.package!, import.meta.dir);
+    const modulePath = await Bun.resolve(props.package!, builder.entrypointDir);
     stylesheet = await Bun.file(modulePath).text();
   } else {
     filepath = "inline";

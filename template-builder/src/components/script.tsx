@@ -1,6 +1,7 @@
 import { BuildConfig } from "bun";
 import { ComponentApi } from "jsxte";
 import path from "node:path";
+import { builderCtx } from "../contexts";
 
 const IS_PROD = process.env.NODE_ENV !== "development";
 
@@ -37,6 +38,7 @@ export const Script = async (
   props: ScriptProps,
   componentApi: ComponentApi
 ) => {
+  const builder = componentApi.ctx.getOrFail(builderCtx);
   const { type = "module", onLoad = () => {}, buildOptions } = props;
 
   const config: BuildConfig = {
@@ -50,7 +52,8 @@ export const Script = async (
   if (props.path) {
     config.entrypoints = [path.join(props.dirname, props.path)];
   } else {
-    config.entrypoints = [props.package!];
+    const modulePath = await Bun.resolve(props.package!, builder.entrypointDir);
+    config.entrypoints = [modulePath];
   }
 
   const result = await Bun.build(config);

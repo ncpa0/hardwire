@@ -33,7 +33,11 @@ async function main() {
 
       const App = mod.default;
 
-      const { htmlFiles, assets } = await buildPages(<App />, args.staticurl);
+      const { htmlFiles, assets } = await buildPages(
+        path.dirname(srcFile),
+        <App />,
+        args.staticurl
+      );
 
       console.log("Saving results to filesystem...");
       await Promise.all([

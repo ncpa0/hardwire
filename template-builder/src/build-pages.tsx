@@ -17,7 +17,11 @@ type ExternalFile = {
   outFile: string;
 };
 
-export const buildPages = async (tree: JSX.Element, staticUrl: string) => {
+export const buildPages = async (
+  entrypointDir: string,
+  tree: JSX.Element,
+  staticUrl: string
+) => {
   console.log("Collecting routes...");
 
   const routes = await collectRoutes(tree);
@@ -66,6 +70,7 @@ export const buildPages = async (tree: JSX.Element, staticUrl: string) => {
       <ExtFilesCtx.Provider value={{ register: registerExternalFile }}>
         <builderCtx.Provider
           value={{
+            entrypointDir: entrypointDir,
             selectedRoute: route.path.split("/"),
             currentRoute: [],
             registerRoute: noop,
