@@ -1,12 +1,14 @@
+#!/bin/env bun
 import fs from "node:fs/promises";
 import path from "node:path";
 import { Argv } from "./argv";
 import { buildPages } from "./build-pages";
+import { registerGlobalFunctions } from "./router";
 
 async function main() {
-  const argv = new Argv();
+  const argv = new Argv("bldr");
 
-  argv.registerCommand(
+  const build = argv.registerCommand(
     "build",
     {
       src: "string",
@@ -15,6 +17,8 @@ async function main() {
     async (args) => {
       const srcFile = path.resolve(args.src);
       const outDir = path.resolve(args.outdir);
+
+      registerGlobalFunctions();
 
       const mod = await import("file://" + srcFile);
 
@@ -42,6 +46,9 @@ async function main() {
     }
   );
 
+  build.setDescription(
+    "Generates static HTML files from the given JSX component."
+  );
   argv.run();
 }
 

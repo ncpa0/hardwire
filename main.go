@@ -9,11 +9,13 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo"
+	templatebuilder "github.com/ncpa0cpl/blazing/template-builder"
 	"github.com/ncpa0cpl/blazing/utils"
 	"github.com/ncpa0cpl/blazing/views"
 	"golang.org/x/net/html"
 )
 
+var ENTRYPOINT = utils.GetEnv("PAGE_ENTRYPOINT", "./pages/index.tsx")
 var VIEWS = utils.GetEnv("VIEWS_DIR", "./")
 var STATIC_DIR = utils.GetEnv("STATIC_DIR", "./static")
 var STATIC_URL = utils.GetEnv("STATIC_URL", "/static")
@@ -23,9 +25,13 @@ func loadViews() {
 	wd, _ := os.Getwd()
 	viewsFullPath := path.Join(wd, VIEWS)
 
-	fmt.Println(viewsFullPath)
+	err := templatebuilder.BuildPages(ENTRYPOINT, viewsFullPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	err := utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
+	err = utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
 		for _, file := range files {
 			ext := path.Ext(file)
 
@@ -90,7 +96,6 @@ func main() {
 	})
 
 	ViewRegistry.ForEach(func(view *views.View) {
-		fmt.Println("Adding route: ", view.GetFilepath())
 		e.GET(view.GetFilepath(), func(c echo.Context) error {
 			selector := c.Request().Header.Get("HX-Target")
 

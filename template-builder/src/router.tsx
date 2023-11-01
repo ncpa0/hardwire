@@ -95,3 +95,21 @@ export const Link = (
   const target = app.getRouteContainerId(currentPathname);
   return <a {...props} hx-target={target} />;
 };
+
+export const registerGlobalFunctions = () => {
+  Object.defineProperty(global, "Router", {
+    value: Router,
+    enumerable: true,
+    writable: false,
+  });
+  Object.defineProperty(global, "Route", {
+    value: Route,
+    enumerable: true,
+    writable: false,
+  });
+  Object.defineProperty(global, "Link", {
+    value: Link,
+    enumerable: true,
+    writable: false,
+  });
+};
