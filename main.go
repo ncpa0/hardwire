@@ -27,7 +27,10 @@ func SetDebugMode(debugMode bool) {
 
 func loadViews() error {
 	wd, _ := os.Getwd()
-	viewsFullPath := path.Join(wd, VIEWS)
+	viewsFullPath := VIEWS
+	if !path.IsAbs(viewsFullPath) {
+		viewsFullPath = path.Join(wd, viewsFullPath)
+	}
 
 	err := templatebuilder.BuildPages(ENTRYPOINT, viewsFullPath)
 	if err != nil {

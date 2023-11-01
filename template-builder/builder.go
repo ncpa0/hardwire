@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 )
 
 //go:embed src bunfig.toml node_modules/jsxte node_modules/minimist node_modules/prettier
@@ -63,10 +64,17 @@ func BuildPages(pagesDir string, outDir string) error {
 		return err
 	}
 
-	tmpDir := wd + "/.tmp"
-	nodemodulesDir := tmpDir + "/node_modules"
-	binFile := tmpDir + "/index.tsx"
-	bunConfigFile := tmpDir + "/bunfig.toml"
+	if !path.IsAbs(pagesDir) {
+		pagesDir = path.Join(wd, pagesDir)
+	}
+	if !path.IsAbs(outDir) {
+		outDir = path.Join(wd, outDir)
+	}
+
+	tmpDir := path.Join(wd, ".tmp")
+	nodemodulesDir := path.Join(tmpDir, "node_modules")
+	binFile := path.Join(tmpDir, "index.tsx")
+	bunConfigFile := path.Join(tmpDir, "bunfig.toml")
 
 	err = os.MkdirAll(tmpDir, 0755)
 	if err != nil {
