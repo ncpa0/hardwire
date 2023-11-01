@@ -3,9 +3,7 @@ package views
 import (
 	"bytes"
 	"fmt"
-	"hash/fnv"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/antchfx/htmlquery"
@@ -27,13 +25,6 @@ type NodeProxy struct {
 	etag string
 }
 
-func hash(s string) string {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	hashNum := h.Sum32()
-	return strconv.FormatUint(uint64(hashNum), 16)
-}
-
 func NewView(root string, filepath string) (*View, error) {
 	doc, err := htmlquery.LoadDoc(path.Join(root, filepath))
 
@@ -51,7 +42,7 @@ func NewView(root string, filepath string) (*View, error) {
 	}
 
 	rawHtml := b.String()
-	hash := hash(rawHtml)
+	hash := utils.Hash(rawHtml)
 
 	return &View{
 		root:     root,
@@ -98,7 +89,7 @@ func (v *View) QuerySelector(selector string) *utils.Option[NodeProxy] {
 	node := &NodeProxy{
 		node: result,
 		raw:  rawHtml,
-		etag: hash(rawHtml),
+		etag: utils.Hash(rawHtml),
 	}
 
 	return utils.NewOption(node)
@@ -123,7 +114,7 @@ func (v *View) QuerySelectorAll(selector string) []*NodeProxy {
 		node := &NodeProxy{
 			node: node,
 			raw:  rawHtml,
-			etag: hash(rawHtml),
+			etag: utils.Hash(rawHtml),
 		}
 		result = append(result, node)
 	}

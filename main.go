@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo"
+	servestatic "github.com/ncpa0/htmx-framework/serve-static"
 	templatebuilder "github.com/ncpa0/htmx-framework/template-builder"
 	"github.com/ncpa0/htmx-framework/utils"
 	"github.com/ncpa0/htmx-framework/views"
@@ -35,7 +36,8 @@ type Configuration struct {
 	// The URL path from under which the static files will be hosted.
 	//
 	// Defaults to `/static`.
-	StaticURL string
+	StaticURL        string
+	BeforeStaticSend func(c echo.Context) error
 }
 
 var viewRegistry = views.NewViewRegistry()
@@ -66,6 +68,9 @@ func Configure(newConfig *Configuration) {
 	}
 	if newConfig.StaticURL != "" {
 		conf.StaticURL = newConfig.StaticURL
+	}
+	if newConfig.BeforeStaticSend != nil {
+		conf.BeforeStaticSend = newConfig.BeforeStaticSend
 	}
 }
 
@@ -192,7 +197,7 @@ func createRouteHandler(view *views.View) func(c echo.Context) error {
 	}
 }
 
-func Start(e *echo.Echo, port string) error {
+func Start(server *echo.Echo, port string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -215,7 +220,7 @@ func Start(e *echo.Echo, port string) error {
 		if conf.DebugMode {
 			fmt.Printf("Adding new route: %s\n", routePath)
 		}
-		e.GET(routePath, createRouteHandler(view))
+		server.GET(routePath, createRouteHandler(view))
 	})
 
 	if conf.DebugMode {
@@ -226,7 +231,9 @@ func Start(e *echo.Echo, port string) error {
 	if !path.IsAbs(staticDir) {
 		staticDir = path.Join(wd, staticDir)
 	}
-	e.Static(conf.StaticURL, staticDir)
+	servestatic.Serve(server, conf.StaticURL, staticDir, &servestatic.Configuration{
+		BeforeSend: conf.BeforeStaticSend,
+	})
 
-	return e.Start(port)
+	return server.Start(port)
 }
