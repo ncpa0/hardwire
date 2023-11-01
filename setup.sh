@@ -37,5 +37,5 @@ tsconf="{
     }
 }"
 
-echo "$dts" > index.d.ts
+echo "$dts" > htmx-framework.d.ts
 echo "$tsconf" > tsconfig.json
