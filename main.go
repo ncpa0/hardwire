@@ -19,16 +19,20 @@ var ENTRYPOINT = utils.GetEnv("PAGE_ENTRYPOINT", "./pages/index.tsx")
 var VIEWS = utils.GetEnv("VIEWS_DIR", "./")
 var STATIC_DIR = utils.GetEnv("STATIC_DIR", "./static")
 var STATIC_URL = utils.GetEnv("STATIC_URL", "/static")
-var ViewRegistry = views.NewViewRegistry()
+var viewRegistry = views.NewViewRegistry()
 
-func loadViews() {
+func SetDebugMode(debugMode bool) {
+	templatebuilder.DebugMode = debugMode
+}
+
+func loadViews() error {
 	wd, _ := os.Getwd()
 	viewsFullPath := path.Join(wd, VIEWS)
 
 	err := templatebuilder.BuildPages(ENTRYPOINT, viewsFullPath)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return err
 	}
 
 	err = utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
@@ -45,7 +49,7 @@ func loadViews() {
 			if err != nil {
 				return err
 			}
-			ViewRegistry.Register(view)
+			viewRegistry.Register(view)
 		}
 
 		return nil
@@ -54,26 +58,10 @@ func loadViews() {
 	if err != nil {
 		fmt.Println("Error loading views.")
 		fmt.Println(err)
-	}
-}
-
-func renderView(c echo.Context, viewKey string) error {
-	view := ViewRegistry.GetView("/index.html")
-
-	if view.IsNil() {
-		return c.String(http.StatusNotFound, "Not Found")
-	}
-
-	node := view.Get().ToNode()
-
-	var b bytes.Buffer
-	err := html.Render(&b, node)
-
-	if err != nil {
 		return err
 	}
 
-	return c.HTML(http.StatusOK, b.String())
+	return nil
 }
 
 func renderNode(c echo.Context, node *html.Node) error {
@@ -87,14 +75,17 @@ func renderNode(c echo.Context, node *html.Node) error {
 	return c.HTML(http.StatusOK, b.String())
 }
 
-func Start(e *echo.Echo) {
-	loadViews()
+func Start(e *echo.Echo, port string) error {
+	err := loadViews()
+	if err != nil {
+		return err
+	}
 
 	e.GET("/", func(c echo.Context) error {
 		return c.Redirect(http.StatusPermanentRedirect, "/index.html")
 	})
 
-	ViewRegistry.ForEach(func(view *views.View) {
+	viewRegistry.ForEach(func(view *views.View) {
 		e.GET(view.GetFilepath(), func(c echo.Context) error {
 			selector := c.Request().Header.Get("HX-Target")
 
@@ -112,5 +103,5 @@ func Start(e *echo.Echo) {
 
 	e.Static(STATIC_URL, STATIC_DIR)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	return e.Start(port)
 }

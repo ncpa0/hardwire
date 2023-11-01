@@ -10,6 +10,7 @@ import (
 
 //go:embed node_modules/jsxte node_modules/minimist node_modules/prettier src bunfig.toml
 var vfs embed.FS
+var DebugMode = false
 
 func extractFile(filename string, to string) error {
 	outFile, err := os.OpenFile(to, os.O_CREATE|os.O_WRONLY, 0755)
@@ -71,7 +72,9 @@ func BuildPages(pagesDir string, outDir string) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(tmpDir)
+	if !DebugMode {
+		defer os.RemoveAll(tmpDir)
+	}
 
 	err = extractDir("node_modules", nodemodulesDir)
 	if err != nil {
@@ -91,6 +94,7 @@ func BuildPages(pagesDir string, outDir string) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	cmd.Dir = tmpDir
 	cmd.Env = append(cmd.Environ(), "NODE_ENV=production")
 	err = cmd.Run()
 
