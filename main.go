@@ -41,7 +41,7 @@ type Configuration struct {
 var viewRegistry = views.NewViewRegistry()
 
 var conf *Configuration = &Configuration{
-	StripExtension: true,
+	StripExtension: false,
 	DebugMode:      false,
 	Entrypoint:     "index.tsx",
 	ViewsDir:       "views",
@@ -49,13 +49,27 @@ var conf *Configuration = &Configuration{
 	StaticURL:      "/static",
 }
 
-func Configure(config *Configuration) {
-	conf = config
-	templatebuilder.DebugMode = config.DebugMode
+func Configure(newConfig *Configuration) {
+	templatebuilder.DebugMode = newConfig.DebugMode
+
+	conf.StripExtension = newConfig.StripExtension
+	conf.DebugMode = newConfig.DebugMode
+
+	if newConfig.Entrypoint != "" {
+		conf.Entrypoint = newConfig.Entrypoint
+	}
+	if newConfig.ViewsDir != "" {
+		conf.ViewsDir = newConfig.ViewsDir
+	}
+	if newConfig.StaticDir != "" {
+		conf.StaticDir = newConfig.StaticDir
+	}
+	if newConfig.StaticURL != "" {
+		conf.StaticURL = newConfig.StaticURL
+	}
 }
 
-func loadViews() error {
-	wd, _ := os.Getwd()
+func loadViews(wd string) error {
 	viewsFullPath := conf.ViewsDir
 	if !path.IsAbs(viewsFullPath) {
 		viewsFullPath = path.Join(wd, viewsFullPath)
@@ -86,7 +100,7 @@ func loadViews() error {
 
 			if conf.DebugMode {
 				fmt.Printf("Loading view from file %s\n", file)
-				fmt.Printf("ROOT: %s PATH: %s\n", viewsFullPath, relToView)
+				fmt.Printf("  ROOT: %s PATH: %s\n", viewsFullPath, relToView)
 			}
 
 			viewRegistry.Register(view)
@@ -120,44 +134,71 @@ func createRouteHandler(view *views.View) func(c echo.Context) error {
 			fmt.Printf("Received request for %s\n", c.Request().URL)
 			selector := c.Request().Header.Get("HX-Target")
 
+			c.Response().Header().Set("Cache-Control", "public, no-cache, max-age=3600")
+			ifNoneMatch := c.Request().Header.Get("If-None-Match")
+
 			if selector != "" {
-				fmt.Printf("Applying html selector: %s\n", selector)
+				fmt.Printf("  Applying html selector: %s\n", selector)
 				child := view.QuerySelector("#" + selector)
 
 				if !child.IsNil() {
-					err := renderNode(c, child.Get())
-					if err != nil {
-						fmt.Println("Rendering the node has failed.")
+					etag := child.Get().GetEtag()
+					if ifNoneMatch == etag {
+						fmt.Println("  Returning 304 Not Modified")
+						return c.NoContent(http.StatusNotModified)
 					}
-					return err
+
+					c.Response().Header().Set("ETag", etag)
+					return c.HTML(http.StatusOK, child.Get().ToHtml())
 				}
 			}
 
-			err := renderNode(c, view.ToNode())
-			if err != nil {
-				fmt.Println("Rendering the node has failed.")
+			etag := view.GetNode().GetEtag()
+			if ifNoneMatch == etag {
+				fmt.Println("  Returning 304 Not Modified")
+				return c.NoContent(http.StatusNotModified)
 			}
-			return err
+
+			c.Response().Header().Set("ETag", etag)
+			return c.HTML(http.StatusOK, view.GetNode().ToHtml())
 		}
 	}
 
 	return func(c echo.Context) error {
 		selector := c.Request().Header.Get("HX-Target")
 
+		c.Response().Header().Set("Cache-Control", "public, no-cache, max-age=3600")
+		ifNoneMatch := c.Request().Header.Get("If-None-Match")
+
 		if selector != "" {
 			child := view.QuerySelector("#" + selector)
 
 			if !child.IsNil() {
-				return renderNode(c, child.Get())
+				if ifNoneMatch == child.Get().GetEtag() {
+					return c.NoContent(http.StatusNotModified)
+				}
+
+				c.Response().Header().Set("ETag", child.Get().GetEtag())
+				return c.HTML(http.StatusOK, child.Get().ToHtml())
 			}
 		}
 
-		return renderNode(c, view.ToNode())
+		if ifNoneMatch == view.GetNode().GetEtag() {
+			return c.NoContent(http.StatusNotModified)
+		}
+
+		c.Response().Header().Set("ETag", view.GetNode().GetEtag())
+		return c.HTML(http.StatusOK, view.GetNode().ToHtml())
 	}
 }
 
 func Start(e *echo.Echo, port string) error {
-	err := loadViews()
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	err = loadViews(wd)
 	if err != nil {
 		return err
 	}
@@ -180,7 +221,12 @@ func Start(e *echo.Echo, port string) error {
 	if conf.DebugMode {
 		fmt.Printf("Serving static files at the following URL: %s from directory: %s\n", conf.StaticURL, conf.StaticDir)
 	}
-	e.Static(conf.StaticURL, conf.StaticDir)
+
+	staticDir := conf.StaticDir
+	if !path.IsAbs(staticDir) {
+		staticDir = path.Join(wd, staticDir)
+	}
+	e.Static(conf.StaticURL, staticDir)
 
 	return e.Start(port)
 }

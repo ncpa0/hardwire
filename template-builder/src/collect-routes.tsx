@@ -63,10 +63,10 @@ export const collectRoutes = async (
   };
 
   await renderToHtmlAsync(
-    <ExtFilesCtx.Provider value={{ register: () => "" }}>
+    <ExtFilesCtx.Provider value={{ register: () => "", get: () => void 0 }}>
       <builderCtx.Provider
         value={{
-          isBuildStep: false,
+          isBuildPhase: false,
           entrypointDir,
           selectedRoute,
           currentRoute: [],

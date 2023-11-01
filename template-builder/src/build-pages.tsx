@@ -15,6 +15,7 @@ type ExternalFile = {
   name: string;
   type: string;
   outFile: string;
+  url: string;
 };
 
 export const buildPages = async (
@@ -30,7 +31,7 @@ export const buildPages = async (
     return routes.get(path)?.containerID ?? routes.topRouter;
   };
 
-  const extFiles: Array<ExternalFile> = [];
+  const assets: Array<ExternalFile> = [];
 
   const registerExternalFile = (
     contents: string,
@@ -41,36 +42,49 @@ export const buildPages = async (
     switch (type) {
       case "css": {
         const fPath = `/assets/css/${hashedName}.css`;
-        extFiles.push({
+        const url = path.join(staticUrl, fPath);
+        assets.push({
           contents,
           name,
           type,
           outFile: fPath,
+          url,
         });
-        return path.join(staticUrl, fPath);
+        return url;
       }
       case "js": {
         const fPath = `/assets/js/${hashedName}.js`;
-        extFiles.push({
+        const url = path.join(staticUrl, fPath);
+        assets.push({
           contents,
           name,
           type,
           outFile: fPath,
+          url,
         });
-        return path.join(staticUrl, fPath);
+        return url;
       }
     }
   };
 
+  const getExternalFileUrl = (name: string) => {
+    const file = assets.find((f) => f.name === name);
+    return file?.url;
+  };
+
   console.log("Building pages...");
 
-  const ops = routes.getAll().map(async (route) => {
+  const htmlFiles: Array<{ route: string; html: string }> = [];
+
+  for (const route of routes.getAll()) {
     console.log(`Building page '${route.path}.html'`);
     const html = await renderToHtmlAsync(
-      <ExtFilesCtx.Provider value={{ register: registerExternalFile }}>
+      <ExtFilesCtx.Provider
+        value={{ register: registerExternalFile, get: getExternalFileUrl }}
+      >
         <builderCtx.Provider
           value={{
-            isBuildStep: true,
+            isBuildPhase: true,
             entrypointDir: entrypointDir,
             selectedRoute: route.path.split("/"),
             currentRoute: [],
@@ -84,11 +98,11 @@ export const buildPages = async (
       </ExtFilesCtx.Provider>
     );
 
-    return {
+    htmlFiles.push({
       route: route.path,
       html: await prettier.format(html, { parser: "html" }),
-    };
-  });
+    });
+  }
 
-  return { htmlFiles: await Promise.all(ops), assets: extFiles };
+  return { htmlFiles, assets };
 };

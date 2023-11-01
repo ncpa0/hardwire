@@ -25,10 +25,24 @@ export type StyleProps =
     };
 
 export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
+  const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
   const builder = componentApi.ctx.getOrFail(builderCtx);
 
-  if (!builder.isBuildStep) {
+  if (!builder.isBuildPhase) {
     return null;
+  }
+
+  const name =
+    props.package ?? props.path ? path.basename(props.path!) : "inline";
+
+  if (name !== "inline" && !props.inline) {
+    const preBuilt = extFiles.get(name);
+
+    if (preBuilt != null) {
+      return (
+        <link rel="stylesheet" href={preBuilt} type="text/css" media="screen" />
+      );
+    }
   }
 
   const options: MinifyOptions & CompressOptions = {};
@@ -57,7 +71,6 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
     return <style>{contents}</style>;
   }
 
-  const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
   const src = extFiles.register(
     contents,
     props.package ?? props.path ? path.basename(props.path!) : "inline",

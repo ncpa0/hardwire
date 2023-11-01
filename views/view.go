@@ -3,7 +3,9 @@ package views
 import (
 	"bytes"
 	"fmt"
+	"hash/fnv"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/antchfx/htmlquery"
@@ -12,10 +14,24 @@ import (
 )
 
 type View struct {
-	root     string
-	filepath string
-	raw      string
-	document *html.Node
+	root          string
+	filepath      string
+	document      *NodeProxy
+	queryCache    map[string]*NodeProxy
+	queryAllCache map[string][]*NodeProxy
+}
+
+type NodeProxy struct {
+	node *html.Node
+	raw  string
+	etag string
+}
+
+func hash(s string) string {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	hashNum := h.Sum32()
+	return strconv.FormatUint(uint64(hashNum), 16)
 }
 
 func NewView(root string, filepath string) (*View, error) {
@@ -34,11 +50,19 @@ func NewView(root string, filepath string) (*View, error) {
 		return nil, err
 	}
 
+	rawHtml := b.String()
+	hash := hash(rawHtml)
+
 	return &View{
 		root:     root,
 		filepath: filepath,
-		raw:      b.String(),
-		document: doc,
+		document: &NodeProxy{
+			node: doc,
+			raw:  b.String(),
+			etag: hash,
+		},
+		queryCache:    make(map[string]*NodeProxy),
+		queryAllCache: make(map[string][]*NodeProxy),
 	}, nil
 }
 
@@ -55,18 +79,66 @@ func (v *View) FilepathMatches(fpath string) bool {
 	return fullPath == fpath || strings.HasSuffix(fullPath, fpath)
 }
 
-func (v *View) QuerySelector(selector string) *utils.Option[html.Node] {
+func (v *View) QuerySelector(selector string) *utils.Option[NodeProxy] {
+	// first check cache
+	if cached, ok := v.queryCache[selector]; ok {
+		return utils.NewOption(cached)
+	}
+
 	query := utils.NewTranslator(selector).XPathQuery()
-	result := htmlquery.FindOne(v.document, query)
-	return utils.NewOption(result)
+	result := htmlquery.FindOne(v.document.node, query)
+
+	if result == nil {
+		return utils.Empty[NodeProxy]()
+	}
+
+	var b bytes.Buffer
+	html.Render(&b, result)
+	rawHtml := b.String()
+	node := &NodeProxy{
+		node: result,
+		raw:  rawHtml,
+		etag: hash(rawHtml),
+	}
+
+	return utils.NewOption(node)
 }
 
-func (v *View) QuerySelectorAll(selector string) *utils.Option[[]*html.Node] {
+func (v *View) QuerySelectorAll(selector string) []*NodeProxy {
+	// first check cache
+	if cached, ok := v.queryAllCache[selector]; ok {
+		result := make([]*NodeProxy, len(cached))
+		copy(result, cached)
+		return result
+	}
+
 	query := utils.NewTranslator(selector).XPathQuery()
-	result := htmlquery.Find(v.document, query)
-	return utils.NewOption(&result)
+	nodeList := htmlquery.Find(v.document.node, query)
+
+	result := make([]*NodeProxy, len(nodeList))
+	for _, node := range nodeList {
+		var b bytes.Buffer
+		html.Render(&b, node)
+		rawHtml := b.String()
+		node := &NodeProxy{
+			node: node,
+			raw:  rawHtml,
+			etag: hash(rawHtml),
+		}
+		result = append(result, node)
+	}
+
+	return result
 }
 
-func (v *View) ToNode() *html.Node {
+func (v *View) GetNode() *NodeProxy {
 	return v.document
+}
+
+func (n *NodeProxy) ToHtml() string {
+	return n.raw
+}
+
+func (n *NodeProxy) GetEtag() string {
+	return n.etag
 }

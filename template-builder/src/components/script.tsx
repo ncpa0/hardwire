@@ -38,13 +38,27 @@ export const Script = async (
   props: ScriptProps,
   componentApi: ComponentApi
 ) => {
+  const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
   const builder = componentApi.ctx.getOrFail(builderCtx);
 
-  if (!builder.isBuildStep) {
+  if (!builder.isBuildPhase) {
     return null;
   }
 
   const { type = "module", onLoad = () => {}, buildOptions } = props;
+
+  const name = props.package ?? path.basename(props.path);
+
+  const preBuilt = extFiles.get(name);
+
+  if (preBuilt != null) {
+    return (
+      <script
+        type={type === "module" ? "module" : "text/javascript"}
+        src={preBuilt}
+      />
+    );
+  }
 
   const config: BuildConfig = {
     minify: IS_PROD,
@@ -74,12 +88,7 @@ export const Script = async (
     contents = tmp;
   }
 
-  const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
-  const src = extFiles.register(
-    contents,
-    props.package ?? path.basename(props.path),
-    "js"
-  );
+  const src = extFiles.register(contents, name, "js");
 
   return (
     <script type={type === "module" ? "module" : "text/javascript"} src={src} />
