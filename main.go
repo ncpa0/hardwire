@@ -156,9 +156,12 @@ func Start(e *echo.Echo, port string) error {
 		if conf.DebugMode {
 			fmt.Printf("Adding new route: %s\n", routePath)
 		}
-		e.GET(view.GetFilepath(), createRouteHandler(view))
+		e.GET(routePath, createRouteHandler(view))
 	})
 
+	if conf.DebugMode {
+		fmt.Printf("Serving static files at the following URL: %s from directory: %s\n", STATIC_URL, STATIC_DIR)
+	}
 	e.Static(STATIC_URL, STATIC_DIR)
 
 	return e.Start(port)
