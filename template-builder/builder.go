@@ -9,7 +9,7 @@ import (
 	"path"
 )
 
-//go:embed src bunfig.toml node_modules/jsxte node_modules/minimist node_modules/prettier node_modules/csso
+//go:embed src bunfig.toml node_modules/jsxte node_modules/minimist node_modules/prettier node_modules/csso  node_modules/css-tree node_modules/mdn-data node_modules/source-map-js
 var vfs embed.FS
 var DebugMode = false
 

@@ -4,14 +4,22 @@ import path from "node:path";
 
 export type StyleProps =
   | {
+      children?: never;
+      package?: never;
       path: string;
       dirname: string;
-      package?: never;
       inline?: boolean;
     }
   | {
       path?: never;
+      children?: never;
       package: string;
+      inline?: boolean;
+    }
+  | {
+      path?: never;
+      package?: never;
+      children: string | string[];
       inline?: boolean;
     };
 
@@ -23,10 +31,15 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   if (props.path) {
     filepath = path.join(props.dirname, props.path);
     stylesheet = await Bun.file(filepath).text();
-  } else {
+  } else if (props.package) {
     filepath = props.package!;
     const modulePath = await Bun.resolve(props.package!, import.meta.dir);
     stylesheet = await Bun.file(modulePath).text();
+  } else {
+    filepath = "inline";
+    stylesheet = Array.isArray(props.children!)
+      ? props.children!.join("\n")
+      : props.children!;
   }
 
   const result = await cssMinify(stylesheet, options);
@@ -40,7 +53,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
   const src = extFiles.register(
     contents,
-    props.package ?? path.basename(props.path),
+    props.package ?? props.path ? path.basename(props.path!) : "inline",
     "css"
   );
 

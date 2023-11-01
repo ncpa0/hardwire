@@ -1,4 +1,4 @@
-import "jsxte";
+import { ComponentApi } from "jsxte";
 
 declare global {
   type ScriptPropsBase = {
@@ -14,7 +14,7 @@ declare global {
      */
     type?: "module";
     onLoad?: (contents: string) => string | undefined;
-    buildOptions?: BuildConfig;
+    buildOptions?: {};
   };
 
   type ScriptProps = ScriptPropsBase &

@@ -5,10 +5,7 @@ cd pages
 
 bun add -D jsxte
 
-touch index.d.ts
-touch tsconfig.json
-
-dts="import \"jsxte\";
+dts="import { ComponentApi } from \"jsxte\";
 
 declare global {
   type ScriptPropsBase = {
@@ -24,7 +21,7 @@ declare global {
      */
     type?: \"module\";
     onLoad?: (contents: string) => string | undefined;
-    buildOptions?: BuildConfig;
+    buildOptions?: {};
   };
 
   type ScriptProps = ScriptPropsBase &
