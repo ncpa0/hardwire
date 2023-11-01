@@ -71,7 +71,7 @@ func BuildPages(pagesDir string, outDir string) error {
 	if err != nil {
 		return err
 	}
-	// defer os.RemoveAll(tmpDir)
+	defer os.RemoveAll(tmpDir)
 
 	err = extractDir("node_modules", nodemodulesDir)
 	if err != nil {
