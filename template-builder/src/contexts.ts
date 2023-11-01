@@ -1,6 +1,7 @@
 import { ContextDefinition, defineContext } from "jsxte";
 
 export const builderCtx = defineContext<{
+  isBuildStep: boolean;
   entrypointDir: string;
   currentRoute: string[];
   selectedRoute: string[];

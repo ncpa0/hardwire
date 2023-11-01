@@ -39,6 +39,11 @@ export const Script = async (
   componentApi: ComponentApi
 ) => {
   const builder = componentApi.ctx.getOrFail(builderCtx);
+
+  if (!builder.isBuildStep) {
+    return null;
+  }
+
   const { type = "module", onLoad = () => {}, buildOptions } = props;
 
   const config: BuildConfig = {

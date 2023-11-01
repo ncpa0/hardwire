@@ -33,6 +33,7 @@ class RouteCollection {
 }
 
 export const collectRoutes = async (
+  entrypointDir: string,
   tree: JSX.Element,
   selectedRoute: string[] = [],
   collection: RouteCollection = new RouteCollection()
@@ -65,6 +66,8 @@ export const collectRoutes = async (
     <ExtFilesCtx.Provider value={{ register: () => "" }}>
       <builderCtx.Provider
         value={{
+          isBuildStep: false,
+          entrypointDir,
           selectedRoute,
           currentRoute: [],
           registerRoute,
@@ -78,7 +81,12 @@ export const collectRoutes = async (
   );
 
   for (const r of newRoutes) {
-    await collectRoutes(tree, r.path.split("/").filter(Boolean), collection);
+    await collectRoutes(
+      entrypointDir,
+      tree,
+      r.path.split("/").filter(Boolean),
+      collection
+    );
   }
 
   return collection;

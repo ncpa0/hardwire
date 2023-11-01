@@ -27,6 +27,10 @@ export type StyleProps =
 export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   const builder = componentApi.ctx.getOrFail(builderCtx);
 
+  if (!builder.isBuildStep) {
+    return null;
+  }
+
   const options: MinifyOptions & CompressOptions = {};
   let filepath: string;
   let stylesheet: string;

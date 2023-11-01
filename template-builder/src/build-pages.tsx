@@ -24,7 +24,7 @@ export const buildPages = async (
 ) => {
   console.log("Collecting routes...");
 
-  const routes = await collectRoutes(tree);
+  const routes = await collectRoutes(entrypointDir, tree);
 
   const getRouteContainerId = (path: string): string => {
     return routes.get(path)?.containerID ?? routes.topRouter;
@@ -70,6 +70,7 @@ export const buildPages = async (
       <ExtFilesCtx.Provider value={{ register: registerExternalFile }}>
         <builderCtx.Provider
           value={{
+            isBuildStep: true,
             entrypointDir: entrypointDir,
             selectedRoute: route.path.split("/"),
             currentRoute: [],
