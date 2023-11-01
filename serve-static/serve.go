@@ -108,6 +108,7 @@ type StaticResponse struct {
 	isPrivate                bool
 	sendInstead              error
 	shouldSendInstead        bool
+	contentType              string
 }
 
 func (s *StaticResponse) GetFilepath() string {
@@ -144,6 +145,10 @@ func (s *StaticResponse) SetAcceptRangeRequests(allow bool) {
 
 func (s *StaticResponse) SetIsPrivate(isPrivate bool) {
 	s.isPrivate = isPrivate
+}
+
+func (s *StaticResponse) SetContentType(contentType string) {
+	s.contentType = contentType
 }
 
 func (s *StaticResponse) Instead(err error) {
@@ -239,6 +244,7 @@ func sendFile(file *StaticFile, c echo.Context, conf *Configuration) error {
 		cacheRequireRevalidation: false,
 		acceptRangeRequests:      true,
 		isPrivate:                false,
+		contentType:              file.ContentType,
 	}
 
 	if conf.BeforeSend != nil {
@@ -256,10 +262,10 @@ func sendFile(file *StaticFile, c echo.Context, conf *Configuration) error {
 	}
 
 	h := c.Response().Header()
-	h.Set("Content-Type", file.ContentType)
 	h.Set("Last-Modified", file.LastModifiedAtRFC)
 	h.Set("Date", time.Now().Format(http.TimeFormat))
 	h.Set("ETag", file.Etag)
+	h.Set("Content-Type", sresp.contentType)
 	h.Set("Cache-Control", sresp.buildCacheControlHeader())
 
 	if sresp.acceptRangeRequests {
