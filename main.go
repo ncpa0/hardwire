@@ -37,7 +37,7 @@ type Configuration struct {
 	//
 	// Defaults to `/static`.
 	StaticURL        string
-	BeforeStaticSend func(c echo.Context) error
+	BeforeStaticSend func(resp *servestatic.StaticResponse, c echo.Context) error
 }
 
 var viewRegistry = views.NewViewRegistry()
@@ -139,7 +139,7 @@ func createRouteHandler(view *views.View) func(c echo.Context) error {
 			fmt.Printf("Received request for %s\n", c.Request().URL)
 			selector := c.Request().Header.Get("HX-Target")
 
-			c.Response().Header().Set("Cache-Control", "public, no-cache, max-age=3600")
+			c.Response().Header().Set("Cache-Control", "public, no-cache")
 			ifNoneMatch := c.Request().Header.Get("If-None-Match")
 
 			if selector != "" {
@@ -172,7 +172,7 @@ func createRouteHandler(view *views.View) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		selector := c.Request().Header.Get("HX-Target")
 
-		c.Response().Header().Set("Cache-Control", "public, no-cache, max-age=3600")
+		c.Response().Header().Set("Cache-Control", "public, no-cache")
 		ifNoneMatch := c.Request().Header.Get("If-None-Match")
 
 		if selector != "" {

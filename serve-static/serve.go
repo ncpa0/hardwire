@@ -21,7 +21,7 @@ type StaticFile struct {
 	Etag              string
 }
 
-var staticFiles []StaticFile = []StaticFile{}
+var staticFiles []*StaticFile = []*StaticFile{}
 
 func (f *StaticFile) Revalidate() error {
 	// check if the file has changed since last time
@@ -79,8 +79,77 @@ func getStaticFile(filepath string) ([]byte, string, *time.Time, error) {
 	return buff, http.DetectContentType(buff), &modTime, err
 }
 
+type StaticResponse struct {
+	file                     *StaticFile
+	cacheMaxAge              int
+	cacheRequireRevalidation bool
+	acceptRangeRequests      bool
+	isPrivate                bool
+	sendInstead              error
+	shouldSendInstead        bool
+}
+
+func (s *StaticResponse) GetFilepath() string {
+	return s.file.Path
+}
+
+func (s *StaticResponse) GetFileContent() []byte {
+	// return the copy of the byte slice to avoid problems
+	// that could be caused by the user mutating the array
+	buff := make([]byte, len(s.file.Content))
+	copy(buff, s.file.Content)
+	return buff
+}
+
+func (s *StaticResponse) GetContentType() string {
+	return s.file.ContentType
+}
+
+func (s *StaticResponse) GetLastModifiedAt() string {
+	return s.file.LastModifiedAtRFC
+}
+
+func (s *StaticResponse) SetCacheMaxAge(age int) {
+	s.cacheMaxAge = age
+}
+
+func (s *StaticResponse) SetNoCache(noCache bool) {
+	s.cacheRequireRevalidation = noCache
+}
+
+func (s *StaticResponse) SetAcceptRangeRequests(allow bool) {
+	s.acceptRangeRequests = allow
+}
+
+func (s *StaticResponse) SetIsPrivate(isPrivate bool) {
+	s.isPrivate = isPrivate
+}
+
+func (s *StaticResponse) Instead(err error) {
+	s.sendInstead = err
+	s.shouldSendInstead = true
+}
+
+func (s *StaticResponse) buildCacheControlHeader() string {
+	hvalue := ""
+
+	if s.isPrivate {
+		hvalue += "private"
+	} else {
+		hvalue += "public"
+	}
+
+	if s.cacheRequireRevalidation {
+		hvalue += ", no-cache"
+	} else if s.cacheMaxAge != 0 {
+		hvalue += ", must-revalidate, max-age=" + strconv.Itoa(s.cacheMaxAge)
+	}
+
+	return hvalue
+}
+
 type Configuration struct {
-	BeforeSend func(c echo.Context) error
+	BeforeSend func(*StaticResponse, echo.Context) error
 }
 
 func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) {
@@ -95,7 +164,7 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 			content, ctype, modTime, err := getStaticFile(filepath)
 
 			if err == nil {
-				staticFiles = append(staticFiles, StaticFile{
+				staticFiles = append(staticFiles, &StaticFile{
 					Path:              filepath,
 					RelPath:           relativePath,
 					Content:           content,
@@ -123,7 +192,7 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 		content, ctype, modTime, err := getStaticFile(filepath)
 
 		if err == nil {
-			staticFiles = append(staticFiles, StaticFile{
+			staticFiles = append(staticFiles, &StaticFile{
 				Path:              filepath,
 				RelPath:           routePath,
 				Content:           content,
@@ -140,10 +209,28 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 	})
 }
 
-func sendFile(file StaticFile, c echo.Context, conf *Configuration) error {
+func sendFile(file *StaticFile, c echo.Context, conf *Configuration) error {
 	file.Revalidate()
 
-	if c.Request().Header.Get("If-None-Match") == file.Etag {
+	sresp := &StaticResponse{
+		file:                     file,
+		cacheMaxAge:              86400,
+		cacheRequireRevalidation: false,
+		acceptRangeRequests:      true,
+		isPrivate:                false,
+	}
+
+	if conf.BeforeSend != nil {
+		err := conf.BeforeSend(sresp, c)
+		if err != nil {
+			return err
+		}
+		if sresp.shouldSendInstead {
+			return sresp.sendInstead
+		}
+	}
+
+	if c.Request().Header.Get("If-None-Match") == file.Etag || c.Request().Header.Get("If-Modified-Since") == file.LastModifiedAtRFC {
 		return c.NoContent(304)
 	}
 
@@ -151,43 +238,24 @@ func sendFile(file StaticFile, c echo.Context, conf *Configuration) error {
 	h.Set("Content-Type", file.ContentType)
 	h.Set("Last-Modified", file.LastModifiedAtRFC)
 	h.Set("Date", time.Now().Format(http.TimeFormat))
-	h.Set("Cache-Control", "public, max-age=2592000")
-	h.Set("Accept-Ranges", "bytes")
-	h.Set("ETag", strconv.FormatInt(file.LastModifiedAt.Unix(), 10))
+	h.Set("ETag", file.Etag)
+	h.Set("Cache-Control", sresp.buildCacheControlHeader())
 
-	if conf.BeforeSend != nil {
-		err := conf.BeforeSend(c)
-		if err != nil {
-			return err
+	if sresp.acceptRangeRequests {
+		h.Set("Accept-Ranges", "bytes")
+		requestedRange := utils.ParseRangeHeader(&h)
+		if requestedRange != nil {
+			contentLength := strconv.FormatInt(requestedRange.End-requestedRange.Start+1, 10)
+			contentRange := ("bytes " +
+				strconv.FormatInt(requestedRange.Start, 10) +
+				"-" + strconv.FormatInt(requestedRange.End, 10) +
+				"/" + strconv.FormatInt(int64(len(file.Content)), 10))
+			h.Set("Content-Length", contentLength)
+			h.Set("Content-Range", contentRange)
+
+			return c.Blob(200, file.ContentType, file.Content[requestedRange.Start:requestedRange.End+1])
 		}
 	}
 
-	requestedRange := utils.ParseRangeHeader(&h)
-	if requestedRange != nil {
-		contentLength := strconv.FormatInt(requestedRange.End-requestedRange.Start+1, 10)
-		contentRange := ("bytes " +
-			strconv.FormatInt(requestedRange.Start, 10) +
-			"-" + strconv.FormatInt(requestedRange.End, 10) +
-			"/" + strconv.FormatInt(int64(len(file.Content)), 10))
-		h.Set("Content-Length", contentLength)
-		h.Set("Content-Range", contentRange)
-
-		if conf.BeforeSend != nil {
-			err := conf.BeforeSend(c)
-			if err != nil {
-				return err
-			}
-		}
-
-		return c.Blob(200, file.ContentType, file.Content[requestedRange.Start:requestedRange.End+1])
-	} else {
-		if conf.BeforeSend != nil {
-			err := conf.BeforeSend(c)
-			if err != nil {
-				return err
-			}
-		}
-
-		return c.Blob(200, file.ContentType, file.Content)
-	}
+	return c.Blob(200, file.ContentType, file.Content)
 }
