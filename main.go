@@ -9,9 +9,9 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo"
-	templatebuilder "github.com/ncpa0cpl/blazing/template-builder"
-	"github.com/ncpa0cpl/blazing/utils"
-	"github.com/ncpa0cpl/blazing/views"
+	templatebuilder "github.com/ncpa0/htmx-framework/template-builder"
+	"github.com/ncpa0/htmx-framework/utils"
+	"github.com/ncpa0/htmx-framework/views"
 	"golang.org/x/net/html"
 )
 

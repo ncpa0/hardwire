@@ -1,6 +1,6 @@
 package views
 
-import "github.com/ncpa0cpl/blazing/utils"
+import "github.com/ncpa0/htmx-framework/utils"
 
 type ViewRegistry struct {
 	views []*View

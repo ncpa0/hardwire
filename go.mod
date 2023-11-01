@@ -1,4 +1,4 @@
-module github.com/ncpa0cpl/blazing
+module github.com/ncpa0/htmx-framework
 
 go 1.21.3
 

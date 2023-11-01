@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/antchfx/htmlquery"
-	"github.com/ncpa0cpl/blazing/utils"
+	"github.com/ncpa0/htmx-framework/utils"
 	"golang.org/x/net/html"
 )
 
