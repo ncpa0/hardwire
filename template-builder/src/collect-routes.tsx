@@ -1,5 +1,5 @@
 import { renderToHtmlAsync } from "jsxte";
-import { appCtx } from "./router";
+import { builderCtx } from "./contexts";
 import { pathCmp } from "./utils/paths";
 
 type RouteDefinition = {
@@ -62,17 +62,19 @@ export const collectRoutes = async (
   };
 
   await renderToHtmlAsync(
-    <appCtx.Provider
-      value={{
-        selectedRoute,
-        currentRoute: [],
-        registerRoute,
-        getRouteContainerId,
-        addRouter,
-      }}
-    >
-      {tree}
-    </appCtx.Provider>
+    <ExtFilesCtx.Provider value={{ register: () => "" }}>
+      <builderCtx.Provider
+        value={{
+          selectedRoute,
+          currentRoute: [],
+          registerRoute,
+          getRouteContainerId,
+          addRouter,
+        }}
+      >
+        {tree}
+      </builderCtx.Provider>
+    </ExtFilesCtx.Provider>
   );
 
   for (const r of newRoutes) {

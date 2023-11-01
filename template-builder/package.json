@@ -6,12 +6,16 @@
     "test": "NODE_ENV=production bun test"
   },
   "devDependencies": {
+    "@types/csso": "^5.0.2",
     "@types/minimist": "^1.2.4",
+    "adwavecss": "^0.0.6",
+    "adwaveui": "^0.0.2",
     "bun-types": "latest",
     "typescript": "^5.0.0"
   },
   "peerDependencies": {},
   "dependencies": {
+    "csso": "^5.0.5",
     "jsxte": "^3.1.6",
     "minimist": "^1.2.8",
     "prettier": "^3.0.3"

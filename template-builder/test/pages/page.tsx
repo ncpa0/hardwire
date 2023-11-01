@@ -1,10 +1,12 @@
-import { Link, Route, Router } from "../../src/router";
-
 export default function MainPage() {
   return (
     <html>
       <head>
         <title>Test</title>
+        <Script dirname={import.meta.dir} path="./client.ts" />
+        <Script package="adwaveui" />
+        <Style dirname={import.meta.dir} path="./style.css" />
+        <Style package="adwavecss/dist/styles.css" />
       </head>
       <body>
         <nav>

@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { Argv } from "./argv";
 import { buildPages } from "./build-pages";
-import { registerGlobalFunctions } from "./router";
+import { registerGlobalFunctions } from "./components";
 
 async function main() {
   const argv = new Argv("bldr");
@@ -13,10 +13,13 @@ async function main() {
     {
       src: "string",
       outdir: "string",
+      staticdir: "string",
+      staticurl: "string",
     },
     async (args) => {
       const srcFile = path.resolve(args.src);
       const outDir = path.resolve(args.outdir);
+      const staticDir = path.resolve(args.staticdir);
 
       registerGlobalFunctions();
 
@@ -30,17 +33,23 @@ async function main() {
 
       const App = mod.default;
 
-      const pages = await buildPages(<App />);
+      const { htmlFiles, assets } = await buildPages(<App />, args.staticurl);
 
       console.log("Saving results to filesystem...");
-      await Promise.all(
-        pages.map(async (page) => {
+      await Promise.all([
+        ...htmlFiles.map(async (page) => {
           const outfilePath = path.join(outDir, page.route) + ".html";
           const basedir = path.dirname(outfilePath);
           await fs.mkdir(basedir, { recursive: true });
           await Bun.write(outfilePath, page.html);
-        })
-      );
+        }),
+        ...assets.map(async (asset) => {
+          const outfilePath = path.join(staticDir, asset.outFile);
+          const basedir = path.dirname(outfilePath);
+          await fs.mkdir(basedir, { recursive: true });
+          await Bun.write(outfilePath, asset.contents);
+        }),
+      ]);
 
       console.log("Done.");
     }

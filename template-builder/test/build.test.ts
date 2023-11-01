@@ -22,6 +22,10 @@ describe("build", () => {
         "./test/pages/page.tsx",
         "--outdir",
         "./test/tmp",
+        "--staticdir",
+        "./test/tmp/static",
+        "--staticurl",
+        "/static",
       ],
     });
 

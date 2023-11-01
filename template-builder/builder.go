@@ -9,7 +9,7 @@ import (
 	"path"
 )
 
-//go:embed src bunfig.toml node_modules/jsxte node_modules/minimist node_modules/prettier
+//go:embed src bunfig.toml node_modules/jsxte node_modules/minimist node_modules/prettier node_modules/csso
 var vfs embed.FS
 var DebugMode = false
 
@@ -58,7 +58,7 @@ func extractDir(dirpath string, to string) error {
 	return nil
 }
 
-func BuildPages(pagesDir string, outDir string) error {
+func BuildPages(pagesDir string, outDir string, staticDir string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -69,6 +69,9 @@ func BuildPages(pagesDir string, outDir string) error {
 	}
 	if !path.IsAbs(outDir) {
 		outDir = path.Join(wd, outDir)
+	}
+	if !path.IsAbs(staticDir) {
+		staticDir = path.Join(wd, staticDir)
 	}
 
 	tmpDir := path.Join(wd, ".tmp")
@@ -97,7 +100,7 @@ func BuildPages(pagesDir string, outDir string) error {
 		return err
 	}
 
-	cmd := exec.Command("bun", "--config="+bunConfigFile, binFile, "build", "--src", pagesDir, "--outdir", outDir)
+	cmd := exec.Command("bun", "--config="+bunConfigFile, binFile, "build", "--src", pagesDir, "--outdir", outDir, "--staticdir", staticDir)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
