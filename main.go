@@ -1,4 +1,4 @@
-package main
+package htmxframework
 
 import (
 	"bytes"
@@ -57,7 +57,7 @@ func loadViews() {
 	}
 }
 
-func RenderView(c echo.Context, viewKey string) error {
+func renderView(c echo.Context, viewKey string) error {
 	view := ViewRegistry.GetView("/index.html")
 
 	if view.IsNil() {
@@ -76,7 +76,7 @@ func RenderView(c echo.Context, viewKey string) error {
 	return c.HTML(http.StatusOK, b.String())
 }
 
-func RenderNode(c echo.Context, node *html.Node) error {
+func renderNode(c echo.Context, node *html.Node) error {
 	var b bytes.Buffer
 	err := html.Render(&b, node)
 
@@ -87,10 +87,9 @@ func RenderNode(c echo.Context, node *html.Node) error {
 	return c.HTML(http.StatusOK, b.String())
 }
 
-func main() {
+func Start(e *echo.Echo) {
 	loadViews()
 
-	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
 		return c.Redirect(http.StatusPermanentRedirect, "/index.html")
 	})
@@ -103,11 +102,11 @@ func main() {
 				child := view.QuerySelector("#" + selector)
 
 				if !child.IsNil() {
-					return RenderNode(c, child.Get())
+					return renderNode(c, child.Get())
 				}
 			}
 
-			return RenderNode(c, view.ToNode())
+			return renderNode(c, view.ToNode())
 		})
 	})
 
