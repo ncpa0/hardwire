@@ -16,7 +16,7 @@ type User = {
 export const StreamedFragment = async () => {
   return (
     <Stream<User>
-      require="user"
+      require="User"
       render={(user) => {
         return (
           <div>
