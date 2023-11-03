@@ -11,9 +11,7 @@ import (
 	"github.com/labstack/echo"
 	servestatic "github.com/ncpa0/htmx-framework/serve-static"
 	templatebuilder "github.com/ncpa0/htmx-framework/template-builder"
-	"github.com/ncpa0/htmx-framework/utils"
 	"github.com/ncpa0/htmx-framework/views"
-	"golang.org/x/net/html"
 )
 
 type Configuration struct {
@@ -40,8 +38,6 @@ type Configuration struct {
 	BeforeStaticSend func(resp *servestatic.StaticResponse, c echo.Context) error
 }
 
-var viewRegistry = views.NewViewRegistry()
-
 var conf *Configuration = &Configuration{
 	StripExtension: false,
 	DebugMode:      false,
@@ -49,6 +45,10 @@ var conf *Configuration = &Configuration{
 	ViewsDir:       "views",
 	StaticDir:      "static",
 	StaticURL:      "/static",
+}
+
+var DynamicDataProvider *DDProvider = &DDProvider{
+	resources: make(map[string]*DynamicResource),
 }
 
 func Configure(newConfig *Configuration) {
@@ -72,65 +72,6 @@ func Configure(newConfig *Configuration) {
 	if newConfig.BeforeStaticSend != nil {
 		conf.BeforeStaticSend = newConfig.BeforeStaticSend
 	}
-}
-
-func loadViews(wd string) error {
-	viewsFullPath := conf.ViewsDir
-	if !path.IsAbs(viewsFullPath) {
-		viewsFullPath = path.Join(wd, viewsFullPath)
-	}
-
-	err := templatebuilder.BuildPages(conf.Entrypoint, viewsFullPath, conf.StaticDir, conf.StaticURL)
-	if err != nil {
-		return err
-	}
-
-	if conf.DebugMode {
-		fmt.Printf("Loading view from %s\n", viewsFullPath)
-	}
-	err = utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
-		for _, file := range files {
-			ext := path.Ext(file)
-
-			if ext != ".html" {
-				continue
-			}
-
-			fullPath := path.Join(root, file)
-			relToView := fullPath[len(viewsFullPath):]
-			view, err := views.NewView(viewsFullPath, relToView)
-			if err != nil {
-				return err
-			}
-
-			if conf.DebugMode {
-				fmt.Printf("Loading view from file %s\n", file)
-				fmt.Printf("  ROOT: %s PATH: %s\n", viewsFullPath, relToView)
-			}
-
-			viewRegistry.Register(view)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		fmt.Println("Error loading views.")
-		return err
-	}
-
-	return nil
-}
-
-func renderNode(c echo.Context, node *html.Node) error {
-	var b bytes.Buffer
-	err := html.Render(&b, node)
-
-	if err != nil {
-		return err
-	}
-
-	return c.HTML(http.StatusOK, b.String())
 }
 
 func createRouteHandler(view *views.View) func(c echo.Context) error {
@@ -197,6 +138,26 @@ func createRouteHandler(view *views.View) func(c echo.Context) error {
 	}
 }
 
+func createDynamicFragmentHandler(view *views.View) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		provider := DynamicDataProvider.find(view.RequiredResource)
+		resource, err := provider.handler(c)
+		if err != nil {
+			return err
+		}
+		if resource == nil {
+			return c.NoContent(http.StatusNotFound)
+		}
+
+		var buff bytes.Buffer
+		err = view.Template.Execute(&buff, resource)
+		if err != nil {
+			return err
+		}
+		return c.String(http.StatusOK, buff.String())
+	}
+}
+
 func Start(server *echo.Echo, port string) error {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -208,7 +169,7 @@ func Start(server *echo.Echo, port string) error {
 		return err
 	}
 
-	viewRegistry.ForEach(func(view *views.View) {
+	addViewEndpoint := func(view *views.View) {
 		var routePath string = view.GetFilepath()
 		if !path.IsAbs(routePath) {
 			routePath = "/" + view.GetFilepath()
@@ -221,6 +182,27 @@ func Start(server *echo.Echo, port string) error {
 			fmt.Printf("Adding new route: %s\n", routePath)
 		}
 		server.GET(routePath, createRouteHandler(view))
+	}
+
+	addDynamicFragmentEndpoint := func(view *views.View) {
+		var routePath string = view.GetFilepath()
+		if !path.IsAbs(routePath) {
+			routePath = "/" + view.GetFilepath()
+		}
+		routePath = routePath[:len(routePath)-len(".template.html")]
+
+		if conf.DebugMode {
+			fmt.Printf("Adding new dynamic fragment under route: %s\n", routePath)
+		}
+		server.GET(routePath, createDynamicFragmentHandler(view))
+	}
+
+	viewRegistry.ForEach(func(view *views.View) {
+		if view.IsDynamicFragment {
+			addDynamicFragmentEndpoint(view)
+		} else {
+			addViewEndpoint(view)
+		}
 	})
 
 	if conf.DebugMode {

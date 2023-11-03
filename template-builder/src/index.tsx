@@ -46,17 +46,27 @@ async function main() {
           await fs.mkdir(basedir, { recursive: true });
           await Bun.write(outfilePath, page.html);
         }),
-        ...dynamicFragments.map(async (frag) => {
-          const outfilePath = path.join(outDir, "__dyn", frag.hash) + ".html";
-          const basedir = path.dirname(outfilePath);
-          await fs.mkdir(basedir, { recursive: true });
-          await Bun.write(outfilePath, frag.contents);
-        }),
         ...assets.map(async (asset) => {
           const outfilePath = path.join(staticDir, asset.outFile);
           const basedir = path.dirname(outfilePath);
           await fs.mkdir(basedir, { recursive: true });
           await Bun.write(outfilePath, asset.contents);
+        }),
+        ...dynamicFragments.map(async (frag) => {
+          const meta = {
+            resourceName: frag.name,
+            hash: frag.hash,
+          };
+
+          const outfilePath =
+            path.join(outDir, "__dyn", frag.hash) + ".template.html";
+          const metaFile = path.join(outDir, "__dyn", frag.hash) + ".meta.json";
+
+          const basedir = path.dirname(outfilePath);
+          await fs.mkdir(basedir, { recursive: true });
+
+          await Bun.write(outfilePath, frag.contents);
+          await Bun.write(metaFile, JSON.stringify(meta));
         }),
       ]);
 

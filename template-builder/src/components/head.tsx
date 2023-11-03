@@ -6,7 +6,7 @@ export const Head = (props: JSXTE.PropsWithChildren<{}>) => {
         integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
         crossorigin="anonymous"
       ></script>
-      {/* <Script dirname={import.meta.dir} path="../client/stream-data.ts" /> */}
+      {props.children}
     </head>
   );
 };

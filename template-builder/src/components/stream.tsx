@@ -12,9 +12,7 @@ export const Stream = async <T extends object = Record<never, never>>(
   compApi: ComponentApi
 ) => {
   const bldr = compApi.ctx.getOrFail(builderCtx);
-  const templ = await compApi.renderAsync(
-    <>{props.render(structProxy("." + props.require))}</>
-  );
+  const templ = await compApi.renderAsync(<>{props.render(structProxy(""))}</>);
 
   const url = bldr.registerDynamicFragment(props.require, templ);
 

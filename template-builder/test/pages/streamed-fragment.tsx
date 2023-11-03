@@ -1,5 +1,5 @@
 import { If, condition } from "../../src/components/gotmpl-generator/if";
-import { Map } from "../../src/components/gotmpl-generator/map";
+import { Range } from "../../src/components/gotmpl-generator/range";
 import { Stream } from "../../src/components/stream";
 
 type User = {
@@ -32,7 +32,7 @@ export const StreamedFragment = async () => {
                 )
               )}
             >
-              <Map
+              <Range
                 data={user.premiumLinks}
                 render={(link) => {
                   return (

@@ -8,7 +8,7 @@ type MapProps<Data extends StructProxy<any[]>> = {
   render: (data: Data[number]) => JSX.Element;
 };
 
-export const Map = async <Data extends StructProxy<any[]>>(
+export const Range = async <Data extends StructProxy<any[]>>(
   props: MapProps<Data>,
   compApi: ComponentApi
 ) => {

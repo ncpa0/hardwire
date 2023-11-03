@@ -2,9 +2,12 @@ package views
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"os"
 	"path"
 	"strings"
+	"text/template"
 
 	"github.com/antchfx/htmlquery"
 	"github.com/ncpa0/htmx-framework/utils"
@@ -12,11 +15,14 @@ import (
 )
 
 type View struct {
-	root          string
-	filepath      string
-	document      *NodeProxy
-	queryCache    map[string]*NodeProxy
-	queryAllCache map[string][]*NodeProxy
+	IsDynamicFragment bool
+	Template          *template.Template
+	RequiredResource  string
+	root              string
+	filepath          string
+	document          *NodeProxy
+	queryCache        map[string]*NodeProxy
+	queryAllCache     map[string][]*NodeProxy
 }
 
 type NodeProxy struct {
@@ -44,16 +50,43 @@ func NewView(root string, filepath string) (*View, error) {
 	rawHtml := b.String()
 	hash := utils.Hash(rawHtml)
 
+	isDynamicFragment := false
+	var viewTemplate *template.Template
+	var templateRequiredResource string
+	if strings.HasSuffix(filepath, ".template.html") {
+		dirname := path.Dir(filepath)
+		basename := path.Base(strings.TrimSuffix(filepath, ".template.html"))
+		metaFilepath := path.Join(root, dirname, basename+".meta.json")
+
+		metaFile, err := loadMetafile(metaFilepath)
+		if err != nil {
+			return nil, err
+		}
+
+		templ, err := template.New(filepath).Parse(rawHtml)
+
+		if err != nil {
+			return nil, err
+		}
+
+		isDynamicFragment = true
+		viewTemplate = templ
+		templateRequiredResource = metaFile.ResourceName
+	}
+
 	return &View{
-		root:     root,
-		filepath: filepath,
+		root:              root,
+		filepath:          filepath,
+		queryCache:        make(map[string]*NodeProxy),
+		queryAllCache:     make(map[string][]*NodeProxy),
+		IsDynamicFragment: isDynamicFragment,
+		Template:          viewTemplate,
+		RequiredResource:  templateRequiredResource,
 		document: &NodeProxy{
 			node: doc,
 			raw:  b.String(),
 			etag: hash,
 		},
-		queryCache:    make(map[string]*NodeProxy),
-		queryAllCache: make(map[string][]*NodeProxy),
 	}, nil
 }
 
@@ -132,4 +165,25 @@ func (n *NodeProxy) ToHtml() string {
 
 func (n *NodeProxy) GetEtag() string {
 	return n.etag
+}
+
+type TemplateMetafile struct {
+	ResourceName string `json:"resourceName"`
+	Hash         string `json:"hash"`
+}
+
+func loadMetafile(filepath string) (*TemplateMetafile, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var metafile TemplateMetafile
+	err = json.NewDecoder(file).Decode(&metafile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metafile, nil
 }

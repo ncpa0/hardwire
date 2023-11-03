@@ -80,7 +80,7 @@ export const buildPages = async (
       hash: hashedName,
       contents,
     });
-    return `/__htmxdyn_frag/${hashedName}`;
+    return `/__dyn/${hashedName}`;
   };
 
   const getExternalFileUrl = (name: string) => {
