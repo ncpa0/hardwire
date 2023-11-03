@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import fs from "node:fs/promises";
 import path from "node:path";
 
 const file = (fp: string) => Bun.file(path.resolve(import.meta.dir, fp));
@@ -50,5 +51,12 @@ describe("build", () => {
     expect(await product1.text()).toMatchSnapshot();
     expect(await product2.text()).toMatchSnapshot();
     expect(await product3.text()).toMatchSnapshot();
+
+    const dyns = await fs.readdir(path.resolve(import.meta.dir, "./tmp/__dyn"));
+
+    for (const dyn of dyns) {
+      const dynFile = file(`./tmp/__dyn/${dyn}`);
+      expect(await dynFile.text()).toMatchSnapshot();
+    }
   });
 });

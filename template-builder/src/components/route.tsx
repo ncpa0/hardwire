@@ -22,9 +22,12 @@ export const Route = (
         value={{
           currentRoute: app.currentRoute.concat(props.path),
           selectedRoute: app.selectedRoute.slice(1),
+          entrypointDir: app.entrypointDir,
+          isBuildPhase: app.isBuildPhase,
           getRouteContainerId: app.getRouteContainerId,
           registerRoute: app.registerRoute,
           addRouter: app.addRouter,
+          registerDynamicFragment: app.registerDynamicFragment,
         }}
       >
         {props.children}

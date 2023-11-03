@@ -67,6 +67,22 @@ export const buildPages = async (
     }
   };
 
+  const dynamicFragments: Array<{
+    name: string;
+    hash: string;
+    contents: string;
+  }> = [];
+
+  const registerDynamicFragment = (name: string, contents: string) => {
+    const hashedName = createHash(`${name}_${contents}`);
+    dynamicFragments.push({
+      name,
+      hash: hashedName,
+      contents,
+    });
+    return `/__htmxdyn_frag/${hashedName}`;
+  };
+
   const getExternalFileUrl = (name: string) => {
     const file = assets.find((f) => f.name === name);
     return file?.url;
@@ -91,6 +107,7 @@ export const buildPages = async (
             registerRoute: noop,
             getRouteContainerId,
             addRouter: noop,
+            registerDynamicFragment,
           }}
         >
           {tree}
@@ -104,5 +121,5 @@ export const buildPages = async (
     });
   }
 
-  return { htmlFiles, assets };
+  return { htmlFiles, assets, dynamicFragments };
 };

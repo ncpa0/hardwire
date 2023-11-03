@@ -1,3 +1,5 @@
+import { StreamedFragment } from "./streamed-fragment";
+
 export default function MainPage() {
   return (
     <html>
@@ -60,6 +62,9 @@ export default function MainPage() {
                 <span> Product 3 </span>
               </Route>
             </Router>
+          </Route>
+          <Route path="user">
+            <StreamedFragment />
           </Route>
         </Router>
       </body>

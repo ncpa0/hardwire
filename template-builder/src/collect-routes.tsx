@@ -73,6 +73,7 @@ export const collectRoutes = async (
           registerRoute,
           getRouteContainerId,
           addRouter,
+          registerDynamicFragment: () => "",
         }}
       >
         {tree}

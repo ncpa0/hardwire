@@ -1,4 +1,3 @@
-#!/bin/env bun
 import fs from "node:fs/promises";
 import path from "node:path";
 import { Argv } from "./argv";
@@ -33,7 +32,7 @@ async function main() {
 
       const App = mod.default;
 
-      const { htmlFiles, assets } = await buildPages(
+      const { htmlFiles, dynamicFragments, assets } = await buildPages(
         path.dirname(srcFile),
         <App />,
         args.staticurl
@@ -46,6 +45,12 @@ async function main() {
           const basedir = path.dirname(outfilePath);
           await fs.mkdir(basedir, { recursive: true });
           await Bun.write(outfilePath, page.html);
+        }),
+        ...dynamicFragments.map(async (frag) => {
+          const outfilePath = path.join(outDir, "__dyn", frag.hash) + ".html";
+          const basedir = path.dirname(outfilePath);
+          await fs.mkdir(basedir, { recursive: true });
+          await Bun.write(outfilePath, frag.contents);
         }),
         ...assets.map(async (asset) => {
           const outfilePath = path.join(staticDir, asset.outFile);
