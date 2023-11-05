@@ -3,7 +3,6 @@ package views
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -35,8 +34,6 @@ func NewView(root string, filepath string) (*View, error) {
 	doc, err := htmlquery.LoadDoc(path.Join(root, filepath))
 
 	if err != nil {
-		fmt.Println("Error loading view.")
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -125,6 +122,8 @@ func (v *View) QuerySelector(selector string) *utils.Option[NodeProxy] {
 		etag: utils.Hash(rawHtml),
 	}
 
+	v.queryCache[selector] = node
+
 	return utils.NewOption(node)
 }
 
@@ -151,6 +150,10 @@ func (v *View) QuerySelectorAll(selector string) []*NodeProxy {
 		}
 		result = append(result, node)
 	}
+
+	cacheEntry := make([]*NodeProxy, len(result))
+	copy(cacheEntry, result)
+	v.queryAllCache[selector] = cacheEntry
 
 	return result
 }

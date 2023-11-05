@@ -51,6 +51,7 @@ func (f *StaticFile) Revalidate() error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	info, err := file.Stat()
 	if err != nil {
@@ -83,6 +84,7 @@ func getStaticFile(filepath string) ([]byte, string, *time.Time, error) {
 	if err != nil {
 		return nil, "", nil, err
 	}
+	defer file.Close()
 
 	info, err := file.Stat()
 	if err != nil {
@@ -208,6 +210,7 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 		routePath := c.Param("*")
 		for _, file := range staticFiles {
 			if file.RelPath == routePath {
+				file.Revalidate()
 				return sendFile(file, c, conf)
 			}
 		}
@@ -218,7 +221,7 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 		content, ctype, modTime, err := getStaticFile(filepath)
 
 		if err == nil {
-			staticFiles = append(staticFiles, &StaticFile{
+			file := &StaticFile{
 				Path:              filepath,
 				RelPath:           routePath,
 				Content:           content,
@@ -226,9 +229,10 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 				Etag:              utils.HashBytes(content),
 				LastModifiedAt:    modTime,
 				LastModifiedAtRFC: modTime.Format(http.TimeFormat),
-			})
+			}
+			staticFiles = append(staticFiles, file)
 
-			return sendFile(staticFiles[len(staticFiles)-1], c, conf)
+			return sendFile(file, c, conf)
 		}
 
 		return c.String(404, "Not found")
@@ -236,8 +240,6 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 }
 
 func sendFile(file *StaticFile, c echo.Context, conf *Configuration) error {
-	file.Revalidate()
-
 	sresp := &StaticResponse{
 		file:                     file,
 		cacheMaxAge:              86400,
