@@ -1,6 +1,8 @@
 {
   "name": "htmx-framework",
-  "module": "src/index.ts",
+  "module": "src/index.tsx",
+  "types": "src/index.tsx",
+  "bin": "src/index.tsx",
   "type": "module",
   "scripts": {
     "test": "NODE_ENV=production bun test"
@@ -16,7 +18,7 @@
   "peerDependencies": {},
   "dependencies": {
     "csso": "^5.0.5",
-    "jsxte": "^3.1.6",
+    "jsxte": "latest",
     "minimist": "^1.2.8",
     "prettier": "^3.0.3"
   }

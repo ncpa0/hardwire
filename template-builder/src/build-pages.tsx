@@ -7,7 +7,7 @@ import { builderCtx } from "./contexts";
 const noop = () => {};
 
 function createHash(data: string) {
-  return Bun.hash.crc32(data).toString(16);
+  return Bun.hash.wyhash(data).toString(16);
 }
 
 type ExternalFile = {

@@ -7,8 +7,14 @@ export default function MainPage() {
         <title>Test</title>
         <Script dirname={import.meta.dir} path="./client.ts" />
         <Script package="adwaveui" />
+        <Script embed>console.log("embedded script");</Script>
         <Style dirname={import.meta.dir} path="./style.css" />
         <Style package="adwavecss/dist/styles.css" />
+        <Style embed>
+          {`.body {
+            background-color: red;
+          }`}
+        </Style>
       </head>
       <body>
         <nav>

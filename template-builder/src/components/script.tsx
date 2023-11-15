@@ -1,9 +1,17 @@
 import { BuildConfig } from "bun";
 import { ComponentApi } from "jsxte";
+import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { builderCtx } from "../contexts";
 
 const IS_PROD = process.env.NODE_ENV !== "development";
+
+const generateRandomName = () => {
+  return (
+    Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+  );
+};
 
 type ScriptPropsBase = {
   /**
@@ -25,12 +33,25 @@ export type ScriptProps = ScriptPropsBase &
   (
     | {
         path: string;
-        dirname: string;
         package?: never;
+        children?: never;
+        embed?: never;
+        dirname: string;
       }
     | {
         path?: never;
         package: string;
+        children?: never;
+        embed?: never;
+      }
+    | {
+        path?: never;
+        package?: never;
+        /**
+         * When enabled the contents of this tag will be used.
+         */
+        embed: true;
+        children?: JSXTE.TextNodeElement | JSXTE.TextNodeElement[];
       }
   );
 
@@ -47,9 +68,14 @@ export const Script = async (
 
   const { type = "module", onLoad = () => {}, buildOptions } = props;
 
-  const name = props.package ?? path.basename(props.path);
+  let name: string = "";
+  if (props.package) {
+    name = props.package;
+  } else if (props.path) {
+    name = path.basename(props.path!);
+  }
 
-  const preBuilt = extFiles.get(name);
+  const preBuilt = name ? extFiles.get(name) : undefined;
 
   if (preBuilt != null) {
     return (
@@ -70,9 +96,26 @@ export const Script = async (
 
   if (props.path) {
     config.entrypoints = [path.join(props.dirname, props.path)];
-  } else {
+  } else if (props.package) {
     const modulePath = await Bun.resolve(props.package!, builder.entrypointDir);
     config.entrypoints = [modulePath];
+  } else if (props.embed && props.children) {
+    const tmpdir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "template-builder-js")
+    );
+    const tmpFile = path.join(tmpdir, `${generateRandomName()}.ts`);
+    await Bun.write(
+      tmpFile,
+      Array.isArray(props.children)
+        ? props.children.map((n) => n.text).join("\n")
+        : props.children.text
+    );
+    console.debug(props.children);
+    config.entrypoints = [tmpFile];
+  }
+
+  if (config.entrypoints.length === 0) {
+    return <></>;
   }
 
   const result = await Bun.build(config);
@@ -82,6 +125,11 @@ export const Script = async (
   }
 
   let contents = await result.outputs[0].text().then((t) => t.trim());
+  if (props.path) {
+    contents = `/* ${props.path} */\n${contents}`;
+  } else if (props.package) {
+    contents = `/* ${props.package} */\n${contents}`;
+  }
 
   const tmp = onLoad(contents);
   if (tmp) {

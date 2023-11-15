@@ -17,7 +17,13 @@ func loadViews(wd string) error {
 		viewsFullPath = path.Join(wd, viewsFullPath)
 	}
 
-	err := templatebuilder.BuildPages(conf.Entrypoint, viewsFullPath, conf.StaticDir, conf.StaticURL)
+	err := templatebuilder.BuildPages(
+		conf.Entrypoint,
+		viewsFullPath,
+		conf.StaticDir,
+		conf.StaticURL,
+	)
+
 	if err != nil {
 		return err
 	}

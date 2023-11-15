@@ -9,23 +9,39 @@ export type StructProxy<Struct extends object> = {
 export type ValueProxy<T> = {
   varname(): string;
   toString(): string;
+  [Symbol.toHtmlTag](): string;
 };
 
 export const structProxy = <T extends object>(name: string): StructProxy<T> => {
-  return new Proxy(
-    {
-      name,
+  const o = {
+    name,
+    varname: () => {
+      return name;
     },
-    {
-      get(target, key: string) {
-        switch (key) {
-          case "varname":
-            return () => target.name;
-          case "toString":
-            return () => `{{${target.name}}}`;
-        }
-        return structProxy(`${target.name}.${key}`);
-      },
-    }
-  ) as any;
+    toString: () => {
+      return `{{${name}}}`;
+    },
+    [Symbol.toHtmlTag]() {
+      return `{{${name}}}`;
+    },
+  };
+  const ownKeys: Array<string | symbol> = [
+    ...Object.getOwnPropertyNames(o),
+    ...Object.getOwnPropertySymbols(o),
+  ];
+  return new Proxy(o, {
+    get(target, key: string | symbol) {
+      if (key in target) {
+        // @ts-expect-error
+        return target[key];
+      }
+      return structProxy(`${target.name}.${key as string}`);
+    },
+    ownKeys() {
+      return ownKeys;
+    },
+    has(_, p) {
+      return ownKeys.includes(p as string);
+    },
+  }) as any;
 };

@@ -4,17 +4,24 @@ exports[`build correctly builds html files 1`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -50,17 +57,24 @@ exports[`build correctly builds html files 2`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -94,17 +108,24 @@ exports[`build correctly builds html files 3`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -142,17 +163,24 @@ exports[`build correctly builds html files 4`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -192,17 +220,24 @@ exports[`build correctly builds html files 5`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -244,17 +279,24 @@ exports[`build correctly builds html files 6`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -294,17 +336,24 @@ exports[`build correctly builds html files 7`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -344,17 +393,24 @@ exports[`build correctly builds html files 8`] = `
 "<html>
   <head>
     <title>Test</title>
-    <script type="module" src="/static/assets/js/eeb9b913.js"></script>
-    <script type="module" src="/static/assets/js/86bba22c.js"></script>
+    <script type="module" src="/static/assets/js/8a137c83d45a7d7f.js"></script>
+    <script type="module" src="/static/assets/js/fbb5bba5db3ee884.js"></script>
+    <script type="module" src="/static/assets/js/c59e5930796c3405.js"></script>
     <link
       rel="stylesheet"
-      href="/static/assets/css/3f2a2224.css"
+      href="/static/assets/css/67e0d47c407c1ba8.css"
       type="text/css"
       media="screen"
     />
     <link
       rel="stylesheet"
-      href="/static/assets/css/fa9b0f43.css"
+      href="/static/assets/css/5ed4a73d54932375.css"
+      type="text/css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/assets/css/95792ae4c2a95c9b.css"
       type="text/css"
       media="screen"
     />
@@ -390,9 +446,11 @@ exports[`build correctly builds html files 8`] = `
 "
 `;
 
-exports[`build correctly builds html files 9`] = `
+exports[`build correctly builds html files 9`] = `"{"resourceName":"User","hash":"519a5836bc1c6d19"}"`;
+
+exports[`build correctly builds html files 10`] = `
 "  <div>
-    <h3>{{.User.username}}</h3>
-{{if (and .User.isPremium (or (gt .User.age 18) (le .User.sinceSignedUp 30)))}} {{range .User.premiumLinks}} <a href="{{.url}}">{{.name}}</a> {{end}} {{end}}
+    <h3>{{.username}}</h3>
+{{if (and .isPremium (or (gt .age 18) (le .sinceSignedUp 30)))}} {{range .premiumLinks}} <a href="{{.url}}">{{.name}}</a> {{end}} {{end}}
   </div>"
 `;

@@ -53,6 +53,7 @@ describe("build", () => {
     expect(await product3.text()).toMatchSnapshot();
 
     const dyns = await fs.readdir(path.resolve(import.meta.dir, "./tmp/__dyn"));
+    dyns.sort();
 
     for (const dyn of dyns) {
       const dynFile = file(`./tmp/__dyn/${dyn}`);

@@ -71,42 +71,53 @@ class ConditionBuilder {
     return next;
   }
   /** Equals to */
-  eq(a: ValueProxy<any>, b: ValueProxy<any>): ConditionBuilder {
+  equal(a: ValueProxy<any>, b: ValueProxy<any>): ConditionBuilder {
     const next = new ConditionBuilder();
     next.content = `(eq ${a.varname()} ${b.varname()})`;
     return next;
   }
   /** Not equals to */
-  ne(a: ValueProxy<any>, b: ValueProxy<any>): ConditionBuilder {
+  notEqual(a: ValueProxy<any>, b: ValueProxy<any>): ConditionBuilder {
     const next = new ConditionBuilder();
     next.content = `(ne ${a.varname()} ${b.varname()})`;
     return next;
   }
   /** Less than */
-  lt(a: ValueProxy<Comparable>, b: ValueProxy<Comparable>): ConditionBuilder {
+  lessThan(
+    a: ValueProxy<Comparable>,
+    b: ValueProxy<Comparable>
+  ): ConditionBuilder {
     const next = new ConditionBuilder();
     next.content = `(lt ${a.varname()} ${b.varname()})`;
     return next;
   }
   /** Less than or equals to */
-  le(a: ValueProxy<Comparable>, b: ValueProxy<Comparable>): ConditionBuilder {
+  lessEqualThan(
+    a: ValueProxy<Comparable>,
+    b: ValueProxy<Comparable>
+  ): ConditionBuilder {
     const next = new ConditionBuilder();
     next.content = `(le ${a.varname()} ${b.varname()})`;
     return next;
   }
   /** Greater than */
-  gt(a: ValueProxy<Comparable>, b: ValueProxy<Comparable>): ConditionBuilder {
+  greaterThan(
+    a: ValueProxy<Comparable>,
+    b: ValueProxy<Comparable>
+  ): ConditionBuilder {
     const next = new ConditionBuilder();
     next.content = `(gt ${a.varname()} ${b.varname()})`;
     return next;
   }
   /** Greater than or equals to */
-  ge(a: ValueProxy<Comparable>, b: ValueProxy<Comparable>): ConditionBuilder {
+  greaterEqualThan(
+    a: ValueProxy<Comparable>,
+    b: ValueProxy<Comparable>
+  ): ConditionBuilder {
     const next = new ConditionBuilder();
     next.content = `(ge ${a.varname()} ${b.varname()})`;
     return next;
   }
-
   value(value: string | number | boolean): ValueProxy<any> {
     return {
       varname: () => {

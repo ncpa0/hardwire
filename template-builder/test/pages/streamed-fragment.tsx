@@ -13,10 +13,15 @@ type User = {
   }>;
 };
 
+const Fallback = () => {
+  return <div class="loading-indicator">Loading...</div>;
+};
+
 export const StreamedFragment = async () => {
   return (
     <Stream<User>
       require="User"
+      fallback={<Fallback />}
       render={(user) => {
         return (
           <div>
@@ -26,8 +31,8 @@ export const StreamedFragment = async () => {
                 b.and(
                   user.isPremium,
                   b.or(
-                    b.gt(user.age, b.value(18)),
-                    b.le(user.sinceSignedUp, b.value(30))
+                    b.greaterThan(user.age, b.value(18)),
+                    b.lessEqualThan(user.sinceSignedUp, b.value(30))
                   )
                 )
               )}

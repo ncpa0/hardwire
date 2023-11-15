@@ -1,15 +1,15 @@
 package templatebuilder
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
+
+	"github.com/ncpa0/htmx-framework/utils"
 )
 
-//go:embed src bunfig.toml node_modules/jsxte node_modules/minimist node_modules/prettier node_modules/csso  node_modules/css-tree node_modules/mdn-data node_modules/source-map-js
+//go:embed node_modules src bunfig.toml package.json
 var vfs embed.FS
 var DebugMode = false
 
@@ -58,14 +58,18 @@ func extractDir(dirpath string, to string) error {
 	return nil
 }
 
-func BuildPages(pagesDir string, outDir string, staticDir string, staticUrl string) error {
+func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl string) error {
+	if DebugMode {
+		fmt.Print("Building static HTML...\n")
+	}
+
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	if !path.IsAbs(pagesDir) {
-		pagesDir = path.Join(wd, pagesDir)
+	if !path.IsAbs(entrypoint) {
+		entrypoint = path.Join(wd, entrypoint)
 	}
 	if !path.IsAbs(outDir) {
 		outDir = path.Join(wd, outDir)
@@ -74,51 +78,88 @@ func BuildPages(pagesDir string, outDir string, staticDir string, staticUrl stri
 		staticDir = path.Join(wd, staticDir)
 	}
 
-	tmpDir := path.Join(wd, ".tmp")
-	nodemodulesDir := path.Join(tmpDir, "node_modules")
-	binFile := path.Join(tmpDir, "index.tsx")
-	bunConfigFile := path.Join(tmpDir, "bunfig.toml")
+	pagesDir := path.Dir(entrypoint)
+	modulesDir := path.Join(pagesDir, "node_modules")
+	binDir := path.Join(modulesDir, ".bin")
+	packageDir := path.Join(modulesDir, "template-builder")
+	subModulesDir := path.Join(packageDir, "node_modules")
+	srcDir := path.Join(packageDir, "src")
+	binFile := path.Join(srcDir, "index.tsx")
+	bunfigFile := path.Join(packageDir, "bunfig.toml")
+	pkgFile := path.Join(packageDir, "package.json")
 
-	err = os.MkdirAll(tmpDir, 0755)
+	err = os.MkdirAll(outDir, 0755)
 	if err != nil {
 		return err
 	}
-	if !DebugMode {
-		defer os.RemoveAll(tmpDir)
-	}
-
-	err = extractDir("node_modules", nodemodulesDir)
-	if err != nil {
-		return err
-	}
-	err = extractDir("src", tmpDir)
-	if err != nil {
-		return err
-	}
-	err = extractFile("bunfig.toml", bunConfigFile)
+	err = os.MkdirAll(staticDir, 0755)
 	if err != nil {
 		return err
 	}
 
-	cmd := exec.Command(
-		"bun",
-		"--config="+bunConfigFile,
-		binFile, "build",
-		"--src", pagesDir,
+	err = os.MkdirAll(modulesDir, 0755)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(binDir, 0755)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(packageDir, 0755)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(subModulesDir, 0755)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(srcDir, 0755)
+	if err != nil {
+		return err
+	}
+
+	err = extractDir("node_modules", subModulesDir)
+	if err != nil {
+		return err
+	}
+	err = extractDir("src", srcDir)
+	if err != nil {
+		return err
+	}
+	err = extractFile("bunfig.toml", bunfigFile)
+	if err != nil {
+		return err
+	}
+	err = extractFile("package.json", pkgFile)
+	if err != nil {
+		return err
+	}
+
+	os.Symlink(binFile, path.Join(binDir, "template-builder"))
+
+	fmt.Println(entrypoint)
+	result := utils.Execute("bun", []string{
+		fmt.Sprintf("--config=%s", bunfigFile),
+		"x",
+		"template-builder",
+		"build",
+		"--src", entrypoint,
 		"--outdir", outDir,
 		"--staticdir", staticDir,
 		"--staticurl", staticUrl,
-	)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	}, &utils.ExecuteOptions{
+		Wd: pagesDir,
+		Env: map[string]string{
+			"NODE_ENV": "production",
+		},
+	})
 
-	cmd.Dir = tmpDir
-	cmd.Env = append(cmd.Environ(), "NODE_ENV=production")
-	err = cmd.Run()
+	if result.Err != nil {
+		return fmt.Errorf("error building pages:\n%s %s", result.Stdout, result.Stderr)
+	}
 
-	if err != nil {
-		return fmt.Errorf("error building pages: %s %s", stdout.String(), stderr.String())
+	if DebugMode {
+		fmt.Printf("%s\n", result.Stdout)
 	}
 
 	return nil

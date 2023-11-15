@@ -33,5 +33,12 @@ export const Link = (
   }
 
   const target = app.getRouteContainerId(currentPathname);
-  return <a {...props} hx-boost="true" hx-target={"#" + target} />;
+  return (
+    <a
+      {...props}
+      hx-boost="true"
+      hx-target={"#" + target}
+      hx-swap="outerHTML"
+    />
+  );
 };

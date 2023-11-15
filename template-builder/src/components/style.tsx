@@ -10,18 +10,24 @@ export type StyleProps =
       path: string;
       dirname: string;
       inline?: boolean;
+      embed?: never;
     }
   | {
       path?: never;
       children?: never;
       package: string;
       inline?: boolean;
+      embed?: never;
     }
   | {
       path?: never;
       package?: never;
-      children: string | string[];
+      children?: JSXTE.TextNodeElement | JSXTE.TextNodeElement[];
       inline?: boolean;
+      /**
+       * When enabled the contents of this tag will be used.
+       */
+      embed: true;
     };
 
 export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
@@ -33,9 +39,9 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   }
 
   const name =
-    props.package ?? props.path ? path.basename(props.path!) : "inline";
+    props.package ?? props.path ? path.basename(props.path!) : undefined;
 
-  if (name !== "inline" && !props.inline) {
+  if (name != null && !props.inline) {
     const preBuilt = extFiles.get(name);
 
     if (preBuilt != null) {
@@ -46,8 +52,8 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   }
 
   const options: MinifyOptions & CompressOptions = {};
-  let filepath: string;
-  let stylesheet: string;
+  let filepath: string = "";
+  let stylesheet: string | undefined;
 
   if (props.path) {
     filepath = path.join(props.dirname, props.path);
@@ -56,16 +62,22 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
     filepath = props.package!;
     const modulePath = await Bun.resolve(props.package!, builder.entrypointDir);
     stylesheet = await Bun.file(modulePath).text();
-  } else {
-    filepath = "inline";
+  } else if (props.embed) {
     stylesheet = Array.isArray(props.children!)
-      ? props.children!.join("\n")
-      : props.children!;
+      ? props.children!.map((n) => n.text).join("\n")
+      : props.children!.text;
+  }
+
+  if (!stylesheet) {
+    return null;
   }
 
   const result = await cssMinify(stylesheet, options);
 
-  const contents = `/* ${filepath} */\n${result.css}`;
+  let contents = result.css;
+  if (filepath) {
+    contents = `/* ${filepath} */\n${result.css}`;
+  }
 
   if (props.inline) {
     return <style>{contents}</style>;

@@ -47,7 +47,7 @@ var conf *Configuration = &Configuration{
 	StaticURL:      "/static",
 }
 
-var DynamicDataProvider *DDProvider = &DDProvider{
+var DynamicResourceProvider *DRProvider = &DRProvider{
 	resources: make(map[string]*DynamicResource),
 }
 
@@ -140,7 +140,7 @@ func createRouteHandler(view *views.View) func(c echo.Context) error {
 
 func createDynamicFragmentHandler(view *views.View) func(c echo.Context) error {
 	return func(c echo.Context) error {
-		provider := DynamicDataProvider.find(view.RequiredResource)
+		provider := DynamicResourceProvider.find(view.RequiredResource)
 		resource, err := provider.handler(c)
 		if err != nil {
 			return err
