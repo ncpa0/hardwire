@@ -119,13 +119,15 @@ class ConditionBuilder {
     return next;
   }
   value(value: string | number | boolean): ValueProxy<any> {
+    const varname = JSON.stringify(value);
+    const toString = () => `{{${varname}}}`;
     return {
       varname: () => {
-        return JSON.stringify(value);
+        return varname;
       },
-      toString: () => {
-        return `{{${JSON.stringify(value)}}}`;
-      },
+      toString: toString,
+      [Symbol.toHtmlTag]: toString,
+      [Symbol.toPrimitive]: toString,
     };
   }
 }

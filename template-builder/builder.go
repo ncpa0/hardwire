@@ -6,12 +6,12 @@ import (
 	"os"
 	"path"
 
+	"github.com/ncpa0/htmx-framework/configuration"
 	"github.com/ncpa0/htmx-framework/utils"
 )
 
 //go:embed node_modules src bunfig.toml package.json
 var vfs embed.FS
-var DebugMode = false
 
 func extractFile(filename string, to string) error {
 	outFile, err := os.OpenFile(to, os.O_CREATE|os.O_WRONLY, 0755)
@@ -59,7 +59,7 @@ func extractDir(dirpath string, to string) error {
 }
 
 func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl string) error {
-	if DebugMode {
+	if configuration.Current.DebugMode {
 		fmt.Print("Building static HTML...\n")
 	}
 
@@ -158,7 +158,7 @@ func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl st
 		return fmt.Errorf("error building pages:\n%s %s", result.Stdout, result.Stderr)
 	}
 
-	if DebugMode {
+	if configuration.Current.DebugMode {
 		fmt.Printf("%s\n", result.Stdout)
 	}
 

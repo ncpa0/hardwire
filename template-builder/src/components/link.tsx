@@ -20,7 +20,14 @@ export const Link = (
   while (true) {
     if (pathIsWithin(currentPathname, base)) {
       const target = app.getRouteContainerId(path.join(base, name));
-      return <a {...props} hx-boost="true" hx-target={"#" + target} />;
+      return (
+        <a
+          {...props}
+          hx-boost="true"
+          hx-target={"#" + target}
+          hx-swap="outerHTML"
+        />
+      );
     }
 
     let nextBase = path.dirname(base);

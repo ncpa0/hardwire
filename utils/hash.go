@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"hash/fnv"
+	"hash/crc64"
 	"strconv"
 )
 
@@ -9,9 +9,9 @@ func Hash(s string) string {
 	return HashBytes([]byte(s))
 }
 
+var crcTable = crc64.MakeTable(crc64.ECMA)
+
 func HashBytes(b []byte) string {
-	h := fnv.New32a()
-	h.Write(b)
-	hashNum := h.Sum32()
-	return strconv.FormatUint(uint64(hashNum), 16)
+	checksum := crc64.Checksum(b, crcTable)
+	return strconv.FormatUint(checksum, 16)
 }

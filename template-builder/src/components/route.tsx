@@ -6,6 +6,7 @@ import { pathCmp } from "../utils/paths";
 export const Route = (
   props: JSXTE.PropsWithChildren<{
     path: string;
+    title?: string;
   }>,
   compApi: ComponentApi
 ) => {
@@ -13,6 +14,7 @@ export const Route = (
   const router = compApi.ctx.getOrFail(routerCtx);
   app.registerRoute(
     path.join(...app.currentRoute, props.path),
+    props.title ?? "",
     router.containerID
   );
 
@@ -21,6 +23,7 @@ export const Route = (
       <builderCtx.Provider
         value={{
           currentRoute: app.currentRoute.concat(props.path),
+          currentRouteTitle: app.currentRouteTitle,
           selectedRoute: app.selectedRoute.slice(1),
           entrypointDir: app.entrypointDir,
           isBuildPhase: app.isBuildPhase,

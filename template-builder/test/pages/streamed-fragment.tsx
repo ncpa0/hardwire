@@ -1,6 +1,6 @@
 import { If, condition } from "../../src/components/gotmpl-generator/if";
 import { Range } from "../../src/components/gotmpl-generator/range";
-import { Stream } from "../../src/components/stream";
+import { DynamicFragment } from "../../src/components/stream";
 
 type User = {
   username: string;
@@ -19,7 +19,7 @@ const Fallback = () => {
 
 export const StreamedFragment = async () => {
   return (
-    <Stream<User>
+    <DynamicFragment<User>
       require="User"
       fallback={<Fallback />}
       render={(user) => {
@@ -49,6 +49,6 @@ export const StreamedFragment = async () => {
           </div>
         );
       }}
-    ></Stream>
+    ></DynamicFragment>
   );
 };

@@ -104,6 +104,7 @@ export const buildPages = async (
             entrypointDir: entrypointDir,
             selectedRoute: route.path.split("/"),
             currentRoute: [],
+            currentRouteTitle: route.title,
             registerRoute: noop,
             getRouteContainerId,
             addRouter: noop,

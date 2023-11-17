@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	config "github.com/ncpa0/htmx-framework/configuration"
 	templatebuilder "github.com/ncpa0/htmx-framework/template-builder"
 	"github.com/ncpa0/htmx-framework/utils"
 	"github.com/ncpa0/htmx-framework/views"
@@ -12,23 +13,23 @@ import (
 var viewRegistry = views.NewViewRegistry()
 
 func loadViews(wd string) error {
-	viewsFullPath := conf.ViewsDir
+	viewsFullPath := config.Current.ViewsDir
 	if !path.IsAbs(viewsFullPath) {
 		viewsFullPath = path.Join(wd, viewsFullPath)
 	}
 
 	err := templatebuilder.BuildPages(
-		conf.Entrypoint,
+		config.Current.Entrypoint,
 		viewsFullPath,
-		conf.StaticDir,
-		conf.StaticURL,
+		config.Current.StaticDir,
+		config.Current.StaticURL,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	if conf.DebugMode {
+	if config.Current.DebugMode {
 		fmt.Printf("Loading view from %s\n", viewsFullPath)
 	}
 	err = utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
@@ -46,7 +47,7 @@ func loadViews(wd string) error {
 				return err
 			}
 
-			if conf.DebugMode {
+			if config.Current.DebugMode {
 				fmt.Printf("Loading view from file %s\n", file)
 				fmt.Printf("  ROOT: %s PATH: %s\n", viewsFullPath, relToView)
 			}

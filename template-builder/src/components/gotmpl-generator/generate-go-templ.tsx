@@ -10,20 +10,21 @@ export type ValueProxy<T> = {
   varname(): string;
   toString(): string;
   [Symbol.toHtmlTag](): string;
+  [Symbol.toPrimitive](): string;
 };
 
 export const structProxy = <T extends object>(name: string): StructProxy<T> => {
+  const toString = () => {
+    return `{{${name}}}`;
+  };
   const o = {
     name,
     varname: () => {
       return name;
     },
-    toString: () => {
-      return `{{${name}}}`;
-    },
-    [Symbol.toHtmlTag]() {
-      return `{{${name}}}`;
-    },
+    toString: toString,
+    [Symbol.toHtmlTag]: toString,
+    [Symbol.toPrimitive]: toString,
   };
   const ownKeys: Array<string | symbol> = [
     ...Object.getOwnPropertyNames(o),

@@ -3,12 +3,15 @@ package views
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path"
 	"strings"
 	"text/template"
 
 	"github.com/antchfx/htmlquery"
+	"github.com/ncpa0/htmx-framework/configuration"
 	"github.com/ncpa0/htmx-framework/utils"
 	"golang.org/x/net/html"
 )
@@ -18,16 +21,47 @@ type View struct {
 	Template          *template.Template
 	RequiredResource  string
 	root              string
+	title             string
 	filepath          string
+	routePathname     string
 	document          *NodeProxy
 	queryCache        map[string]*NodeProxy
 	queryAllCache     map[string][]*NodeProxy
 }
 
 type NodeProxy struct {
-	node *html.Node
-	raw  string
-	etag string
+	parentRoot *View
+	node       *html.Node
+	raw        string
+	etag       string
+}
+
+func nodeToString(node *html.Node) (string, error) {
+	var b bytes.Buffer
+	err := html.Render(&b, node)
+	if err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+func addClass(node *html.Node, class string) {
+	var currentClassAttribute *html.Attribute
+	for i, attr := range node.Attr {
+		if attr.Key == "class" {
+			currentClassAttribute = &node.Attr[i]
+			break
+		}
+	}
+
+	if currentClassAttribute == nil {
+		node.Attr = append(node.Attr, html.Attribute{
+			Key: "class",
+			Val: class,
+		})
+	} else {
+		currentClassAttribute.Val += " " + class
+	}
 }
 
 func NewView(root string, filepath string) (*View, error) {
@@ -37,19 +71,12 @@ func NewView(root string, filepath string) (*View, error) {
 		return nil, err
 	}
 
-	var b bytes.Buffer
-	err = html.Render(&b, doc)
-
-	if err != nil {
-		return nil, err
-	}
-
-	rawHtml := b.String()
-	hash := utils.Hash(rawHtml)
-
 	isDynamicFragment := false
 	var viewTemplate *template.Template
 	var templateRequiredResource string
+	var rawHtml string
+	var title string
+	var routePathname string = filepath
 	if strings.HasSuffix(filepath, ".template.html") {
 		dirname := path.Dir(filepath)
 		basename := path.Base(strings.TrimSuffix(filepath, ".template.html"))
@@ -60,20 +87,65 @@ func NewView(root string, filepath string) (*View, error) {
 			return nil, err
 		}
 
+		dynamicFragment := htmlquery.FindOne(doc, "//dynamic-fragment")
+
+		if dynamicFragment == nil {
+			return nil, errors.New("given template is not a valid dynamic fragment")
+		}
+
+		dynamicFragment.Data = "div"
+		dynamicFragment.Attr = append(dynamicFragment.Attr, html.Attribute{
+			Key: "data-frag-url",
+			Val: filepath[:len(filepath)-len(".template.html")],
+		})
+		addClass(dynamicFragment, "__dynamic_fragment")
+		rawHtml, err = nodeToString(dynamicFragment)
+
+		if err != nil {
+			return nil, err
+		}
+
 		templ, err := template.New(filepath).Parse(rawHtml)
 
 		if err != nil {
 			return nil, err
 		}
 
+		if !path.IsAbs(routePathname) {
+			routePathname = "/" + routePathname
+		}
+		routePathname = routePathname[:len(routePathname)-len(".template.html")]
+
 		isDynamicFragment = true
 		viewTemplate = templ
 		templateRequiredResource = metaFile.ResourceName
+		doc = nil
+	} else {
+		rawHtml, err = nodeToString(doc)
+		if err != nil {
+			return nil, err
+		}
+
+		titleNode := htmlquery.FindOne(doc, "//title")
+		if titleNode != nil && titleNode.FirstChild != nil {
+			title = titleNode.FirstChild.Data
+		}
+
+		if !path.IsAbs(routePathname) {
+			routePathname = "/" + routePathname
+		}
+		if configuration.Current.StripExtension {
+			routePathname = routePathname[:len(routePathname)-len(path.Ext(routePathname))]
+		}
 	}
+
+	hash := utils.Hash(rawHtml)
 
 	return &View{
 		root:              root,
+		title:             title,
 		filepath:          filepath,
+		routePathname:     routePathname,
 		queryCache:        make(map[string]*NodeProxy),
 		queryAllCache:     make(map[string][]*NodeProxy),
 		IsDynamicFragment: isDynamicFragment,
@@ -81,7 +153,7 @@ func NewView(root string, filepath string) (*View, error) {
 		RequiredResource:  templateRequiredResource,
 		document: &NodeProxy{
 			node: doc,
-			raw:  b.String(),
+			raw:  rawHtml,
 			etag: hash,
 		},
 	}, nil
@@ -91,13 +163,38 @@ func (v *View) GetFilepath() string {
 	return v.filepath
 }
 
-func (v *View) FilepathMatches(fpath string) bool {
-	if v.filepath == fpath {
+func (v *View) GetRoutePathname() string {
+	return v.routePathname
+}
+
+func pathSegments(p string) []string {
+	segments := strings.Split(p, "/")
+	n := 0
+	for _, segment := range segments {
+		if segment != "" {
+			segments[n] = segment
+			n++
+		}
+	}
+
+	return segments[:n]
+}
+
+func (v *View) MatchesRoute(routePathname string) bool {
+	fpathSegments := pathSegments(routePathname)
+	viewPathSegments := pathSegments(v.routePathname)
+
+	if len(fpathSegments) == len(viewPathSegments) {
+		for i, seg := range fpathSegments {
+			viewSeg := viewPathSegments[i]
+			if seg != viewSeg && viewSeg[0] != ':' {
+				return false
+			}
+		}
 		return true
 	}
 
-	fullPath := path.Join(v.root, v.filepath)
-	return fullPath == fpath || strings.HasSuffix(fullPath, fpath)
+	return false
 }
 
 func (v *View) QuerySelector(selector string) *utils.Option[NodeProxy] {
@@ -117,9 +214,10 @@ func (v *View) QuerySelector(selector string) *utils.Option[NodeProxy] {
 	html.Render(&b, result)
 	rawHtml := b.String()
 	node := &NodeProxy{
-		node: result,
-		raw:  rawHtml,
-		etag: utils.Hash(rawHtml),
+		node:       result,
+		raw:        rawHtml,
+		etag:       utils.Hash(rawHtml),
+		parentRoot: v,
 	}
 
 	v.queryCache[selector] = node
@@ -144,9 +242,10 @@ func (v *View) QuerySelectorAll(selector string) []*NodeProxy {
 		html.Render(&b, node)
 		rawHtml := b.String()
 		node := &NodeProxy{
-			node: node,
-			raw:  rawHtml,
-			etag: utils.Hash(rawHtml),
+			node:       node,
+			raw:        rawHtml,
+			etag:       utils.Hash(rawHtml),
+			parentRoot: v,
 		}
 		result = append(result, node)
 	}
@@ -163,6 +262,9 @@ func (v *View) GetNode() *NodeProxy {
 }
 
 func (n *NodeProxy) ToHtml() string {
+	if n.parentRoot != nil && n.parentRoot.title != "" {
+		return fmt.Sprintf("<title>%s</title>\n%s", n.parentRoot.title, n.raw)
+	}
 	return n.raw
 }
 

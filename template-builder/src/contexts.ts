@@ -4,9 +4,10 @@ export const builderCtx = defineContext<{
   isBuildPhase: boolean;
   entrypointDir: string;
   currentRoute: string[];
+  currentRouteTitle: string;
   selectedRoute: string[];
   addRouter(routerContainerId: string): void;
-  registerRoute(path: string, routerContainerId: string): void;
+  registerRoute(path: string, title: string, routerContainerId: string): void;
   getRouteContainerId(path: string): string;
   registerDynamicFragment(require: string, templ: string): string;
 }>();

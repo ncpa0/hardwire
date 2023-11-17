@@ -4,6 +4,7 @@ import { pathCmp } from "./utils/paths";
 
 type RouteDefinition = {
   path: string;
+  title: string;
   containerID: string;
 };
 
@@ -40,12 +41,17 @@ export const collectRoutes = async (
 ): Promise<RouteCollection> => {
   const newRoutes: Array<RouteDefinition> = [];
 
-  const registerRoute = (path: string, routerContainerId: string) => {
+  const registerRoute = (
+    path: string,
+    title: string,
+    routerContainerId: string
+  ) => {
     if (collection.has(path)) {
       return;
     }
     const route = {
       path,
+      title,
       containerID: routerContainerId,
     };
     newRoutes.push(route);
@@ -70,6 +76,7 @@ export const collectRoutes = async (
           entrypointDir,
           selectedRoute,
           currentRoute: [],
+          currentRouteTitle: "",
           registerRoute,
           getRouteContainerId,
           addRouter,

@@ -1,7 +1,7 @@
 import { ComponentApi } from "jsxte";
 import { builderCtx, routerCtx } from "../contexts";
 
-export const Router = (
+export const Switch = (
   props: JSXTE.PropsWithChildren<{ id: string }>,
   compApi: ComponentApi
 ) => {

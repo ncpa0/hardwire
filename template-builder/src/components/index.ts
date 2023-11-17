@@ -1,23 +1,25 @@
+import { createFormAction } from "./form-action";
 import { If } from "./gotmpl-generator/if";
-import { RangeOver } from "./gotmpl-generator/range";
+import { MapArray } from "./gotmpl-generator/range";
 import { Head } from "./head";
 import { Link } from "./link";
 import { Route } from "./route";
-import { Router } from "./router";
+import { Switch } from "./router";
 import { Script } from "./script";
-import { Stream } from "./stream";
+import { DynamicFragment } from "./stream";
 import { Style } from "./style";
 
 export const GLOBALS = {
-  Router,
+  Switch,
   Route,
   Link,
   Script,
   Style,
   Head,
-  Stream,
+  DynamicFragment,
   If,
-  RangeOver,
+  MapArray,
+  createFormAction,
 };
 
 export const registerGlobalFunctions = () => {
@@ -39,13 +41,14 @@ export const registerGlobalFunctions = () => {
 };
 
 declare global {
-  const Router: typeof GLOBALS.Router;
+  const Switch: typeof GLOBALS.Switch;
   const Route: typeof GLOBALS.Route;
   const Link: typeof GLOBALS.Link;
   const Script: typeof GLOBALS.Script;
   const Style: typeof GLOBALS.Style;
   const Head: typeof GLOBALS.Head;
-  const Stream: typeof GLOBALS.Stream;
+  const DynamicFragment: typeof GLOBALS.DynamicFragment;
   const If: typeof GLOBALS.If;
-  const RangeOver: typeof GLOBALS.RangeOver;
+  const MapArray: typeof GLOBALS.MapArray;
+  const createFormAction: typeof GLOBALS.createFormAction;
 }

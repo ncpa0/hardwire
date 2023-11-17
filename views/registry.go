@@ -16,9 +16,9 @@ func (vr *ViewRegistry) Register(view *View) {
 	vr.views = append(vr.views, view)
 }
 
-func (vr *ViewRegistry) GetView(filepath string) *utils.Option[View] {
+func (vr *ViewRegistry) GetView(routePathname string) *utils.Option[View] {
 	for _, view := range vr.views {
-		if view.FilepathMatches(filepath) {
+		if view.MatchesRoute(routePathname) {
 			return utils.NewOption(view)
 		}
 	}
