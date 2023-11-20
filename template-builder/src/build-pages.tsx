@@ -18,6 +18,14 @@ type ExternalFile = {
   url: string;
 };
 
+type Page = {
+  route: string;
+  html: string;
+  dynamic?: {
+    resource: string;
+  };
+};
+
 export const buildPages = async (
   entrypointDir: string,
   tree: JSX.Element,
@@ -90,10 +98,16 @@ export const buildPages = async (
 
   console.log("Building pages...");
 
-  const htmlFiles: Array<{ route: string; html: string }> = [];
+  const pages: Array<Page> = [];
 
   for (const route of routes.getAll()) {
     console.log(`Building page '${route.path}.html'`);
+    let requiredResource: string | undefined = undefined;
+
+    const markRouteDynamic = (resource: string) => {
+      requiredResource = resource;
+    };
+
     const html = await renderToHtmlAsync(
       <ExtFilesCtx.Provider
         value={{ register: registerExternalFile, get: getExternalFileUrl }}
@@ -109,6 +123,7 @@ export const buildPages = async (
             getRouteContainerId,
             addRouter: noop,
             registerDynamicFragment,
+            markRouteDynamic,
           }}
         >
           {tree}
@@ -116,11 +131,19 @@ export const buildPages = async (
       </ExtFilesCtx.Provider>
     );
 
-    htmlFiles.push({
+    const page: Page = {
       route: route.path,
       html: await prettier.format(html, { parser: "html" }),
-    });
+    };
+
+    if (requiredResource) {
+      page.dynamic = {
+        resource: requiredResource,
+      };
+    }
+
+    pages.push(page);
   }
 
-  return { htmlFiles, assets, dynamicFragments };
+  return { pages, assets, dynamicFragments };
 };

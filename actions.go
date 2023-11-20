@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/labstack/echo"
+	"github.com/ncpa0/htmx-framework/utils"
 	"github.com/ncpa0/htmx-framework/views"
 )
 
@@ -29,8 +30,15 @@ func (ctx *ActionContext) Reload() {
 		return
 	}
 
+	renderResult, err := view.Get().Render(ctx.Echo)
+
+	if err != nil {
+		utils.HandleError(ctx.Echo, err)
+		return
+	}
+
 	ctx.Echo.Response().Header().Set("HX-Retarget", "body")
-	ctx.Echo.String(200, view.Get().GetNode().ToHtml())
+	ctx.Echo.HTML(200, renderResult.Html)
 }
 
 func (ctx *ActionContext) Redirect(to string) {
@@ -47,9 +55,16 @@ func (ctx *ActionContext) Redirect(to string) {
 		return
 	}
 
+	renderResult, err := view.Get().Render(ctx.Echo)
+
+	if err != nil {
+		utils.HandleError(ctx.Echo, err)
+		return
+	}
+
 	ctx.Echo.Response().Header().Set("HX-Push-Url", to)
 	ctx.Echo.Response().Header().Set("HX-Retarget", "body")
-	ctx.Echo.String(200, view.Get().GetNode().ToHtml())
+	ctx.Echo.HTML(200, renderResult.Html)
 }
 
 func (ctx *ActionContext) ReloadFragment(fragmentName string) {

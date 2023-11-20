@@ -3,7 +3,7 @@ import { If } from "./gotmpl-generator/if";
 import { MapArray } from "./gotmpl-generator/range";
 import { Head } from "./head";
 import { Link } from "./link";
-import { Route } from "./route";
+import { DynamicRoute, StaticRoute } from "./route";
 import { Switch } from "./router";
 import { Script } from "./script";
 import { DynamicFragment } from "./stream";
@@ -11,7 +11,8 @@ import { Style } from "./style";
 
 export const GLOBALS = {
   Switch,
-  Route,
+  StaticRoute,
+  DynamicRoute,
   Link,
   Script,
   Style,
@@ -42,7 +43,8 @@ export const registerGlobalFunctions = () => {
 
 declare global {
   const Switch: typeof GLOBALS.Switch;
-  const Route: typeof GLOBALS.Route;
+  const StaticRoute: typeof GLOBALS.StaticRoute;
+  const DynamicRoute: typeof GLOBALS.DynamicRoute;
   const Link: typeof GLOBALS.Link;
   const Script: typeof GLOBALS.Script;
   const Style: typeof GLOBALS.Style;

@@ -30,7 +30,7 @@ func NewDynamicFragmentView(root string, filepath string) (*DynamicFragmentView,
 	basename := path.Base(strings.TrimSuffix(filepath, ".template.html"))
 	metaFilepath := path.Join(root, dirname, basename+".meta.json")
 
-	metaFile, err := loadMetafile(metaFilepath)
+	metaFile, err := loadFragmentMetafile(metaFilepath)
 	if err != nil {
 		return nil, err
 	}

@@ -5,19 +5,19 @@ import (
 	"os"
 )
 
-type templateMetafile struct {
+type pageMetafile struct {
+	IsDynamic    bool   `json:"isDynamic"`
 	ResourceName string `json:"resourceName"`
-	Hash         string `json:"hash"`
 }
 
-func loadFragmentMetafile(filepath string) (*templateMetafile, error) {
+func loadPageMetafile(filepath string) (*pageMetafile, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var metafile templateMetafile
+	var metafile pageMetafile
 	err = json.NewDecoder(file).Decode(&metafile)
 	if err != nil {
 		return nil, err

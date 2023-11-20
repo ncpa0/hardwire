@@ -5,21 +5,26 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"text/template"
 
 	"github.com/antchfx/htmlquery"
+	"github.com/labstack/echo"
 	"github.com/ncpa0/htmx-framework/configuration"
+	resources "github.com/ncpa0/htmx-framework/resource-provider"
 	"github.com/ncpa0/htmx-framework/utils"
 	"golang.org/x/net/html"
 )
 
 type PageView struct {
-	root          string
-	title         string
-	filepath      string
-	routePathname string
-	document      *NodeProxy
-	queryCache    map[string]*NodeProxy
-	queryAllCache map[string][]*NodeProxy
+	root             string
+	title            string
+	filepath         string
+	routePathname    string
+	isDynamic        bool
+	requiredResource string
+	queryCache       map[string]*NodeProxy
+	queryAllCache    map[string][]*NodeProxy
+	document         *NodeProxy
 }
 
 type NodeProxy struct {
@@ -27,6 +32,9 @@ type NodeProxy struct {
 	node       *html.Node
 	raw        string
 	etag       string
+
+	// Only present if parent's isDynamic is true
+	template *template.Template
 }
 
 func nodeToString(node *html.Node) (string, error) {
@@ -64,6 +72,15 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 		return nil, err
 	}
 
+	dirname := path.Dir(filepath)
+	basename := path.Base(strings.TrimSuffix(filepath, ".html"))
+	metaFilepath := path.Join(root, dirname, basename+".meta.json")
+
+	metaFile, err := loadPageMetafile(metaFilepath)
+	if err != nil {
+		return nil, err
+	}
+
 	var rawHtml string
 	var title string
 	var routePathname string = filepath
@@ -86,19 +103,39 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 
 	hash := utils.Hash(rawHtml)
 
-	return &PageView{
-		root:          root,
-		title:         title,
-		filepath:      filepath,
-		routePathname: routePathname,
-		queryCache:    make(map[string]*NodeProxy),
-		queryAllCache: make(map[string][]*NodeProxy),
+	var templ *template.Template
+	if metaFile.IsDynamic {
+		templ, err = template.New(filepath).Parse(rawHtml)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	view := &PageView{
+		root:             root,
+		title:            title,
+		filepath:         filepath,
+		routePathname:    routePathname,
+		isDynamic:        metaFile.IsDynamic,
+		requiredResource: metaFile.ResourceName,
+		queryCache:       make(map[string]*NodeProxy),
+		queryAllCache:    make(map[string][]*NodeProxy),
 		document: &NodeProxy{
-			node: doc,
-			raw:  rawHtml,
-			etag: hash,
+			node:     doc,
+			raw:      rawHtml,
+			etag:     hash,
+			template: templ,
 		},
-	}, nil
+	}
+
+	view.document.parentRoot = view
+
+	return view, nil
+}
+
+func (v *PageView) IsDynamic() bool {
+	return v.isDynamic
 }
 
 func (v *PageView) GetFilepath() string {
@@ -155,11 +192,18 @@ func (v *PageView) QuerySelector(selector string) *utils.Option[NodeProxy] {
 	var b bytes.Buffer
 	html.Render(&b, result)
 	rawHtml := b.String()
+
+	var templ *template.Template
+	if v.isDynamic {
+		templ, _ = template.New(v.filepath + query).Parse(rawHtml)
+	}
+
 	node := &NodeProxy{
 		node:       result,
 		raw:        rawHtml,
 		etag:       utils.Hash(rawHtml),
 		parentRoot: v,
+		template:   templ,
 	}
 
 	v.queryCache[selector] = node
@@ -183,11 +227,18 @@ func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 		var b bytes.Buffer
 		html.Render(&b, node)
 		rawHtml := b.String()
+
+		var templ *template.Template
+		if v.isDynamic {
+			templ, _ = template.New(v.filepath + query).Parse(rawHtml)
+		}
+
 		node := &NodeProxy{
 			node:       node,
 			raw:        rawHtml,
 			etag:       utils.Hash(rawHtml),
 			parentRoot: v,
+			template:   templ,
 		}
 		result = append(result, node)
 	}
@@ -199,17 +250,79 @@ func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 	return result
 }
 
-func (v *PageView) GetNode() *NodeProxy {
-	return v.document
+type RenderedView struct {
+	Html string
+	Etag string
 }
 
-func (n *NodeProxy) ToHtml() string {
-	if n.parentRoot != nil && n.parentRoot.title != "" {
-		return fmt.Sprintf("<title>%s</title>\n%s", n.parentRoot.title, n.raw)
+func (v *PageView) Render(c echo.Context) (*RenderedView, error) {
+	return v.document.Render(c)
+}
+
+func paramMap(c echo.Context) map[string]string {
+	params := make(map[string]string)
+
+	for _, param := range c.ParamNames() {
+		params[param] = c.Param(param)
 	}
-	return n.raw
+
+	return params
 }
 
-func (n *NodeProxy) GetEtag() string {
-	return n.etag
+func (node *NodeProxy) Render(c echo.Context) (*RenderedView, error) {
+	var rawHtml string
+	var etag string
+
+	if node.parentRoot.isDynamic {
+		resource := resources.Provider.Find(node.parentRoot.requiredResource)
+
+		if resource.IsNil() {
+			c.String(404, "resource not found")
+			return nil, fmt.Errorf("resource not found: '%s'", node.parentRoot.requiredResource)
+		}
+
+		requestContext := resources.NewDynamicRequestContext(
+			c,
+			paramMap(c),
+			node.parentRoot.routePathname,
+		)
+
+		resourceValue, err := resource.Get().Handle(requestContext)
+
+		if err != nil {
+			return nil, err
+		}
+
+		var buff bytes.Buffer
+		err = node.template.Execute(&buff, resourceValue)
+		if err != nil {
+			return nil, err
+		}
+
+		rawHtml = buff.String()
+
+		if configuration.Current.Caching.DynamicRoutes.NoStore {
+			etag = ""
+		} else {
+			etag = utils.Hash(rawHtml)
+		}
+	} else {
+		rawHtml = node.raw
+		etag = node.etag
+	}
+
+	if node.parentRoot.title != "" {
+		result := RenderedView{
+			Html: fmt.Sprintf("<title>%s</title>\n%s", node.parentRoot.title, rawHtml),
+			Etag: etag,
+		}
+		return &result, nil
+	}
+
+	result := RenderedView{
+		Html: rawHtml,
+		Etag: etag,
+	}
+
+	return &result, nil
 }

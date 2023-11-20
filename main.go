@@ -8,34 +8,20 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo"
 	config "github.com/ncpa0/htmx-framework/configuration"
+	resources "github.com/ncpa0/htmx-framework/resource-provider"
 	servestatic "github.com/ncpa0/htmx-framework/serve-static"
 	"github.com/ncpa0/htmx-framework/views"
 )
 
-var DynamicResourceProvider *DRProvider = &DRProvider{
-	resources: make(map[string]*DynamicResource),
-}
+type DynamicRequestContext = resources.DynamicRequestContext
+type ResourceRequestError = resources.ResourceRequestError
+type DRProvider = resources.DRProvider
+type Configuration = config.Configuration
+type CachingConfig = config.CachingConfig
+type CachingPolicy = config.CachingPolicy
 
-func Configure(newConfig *config.Configuration) {
-	config.Current.StripExtension = newConfig.StripExtension
-	config.Current.DebugMode = newConfig.DebugMode
-
-	if newConfig.Entrypoint != "" {
-		config.Current.Entrypoint = newConfig.Entrypoint
-	}
-	if newConfig.ViewsDir != "" {
-		config.Current.ViewsDir = newConfig.ViewsDir
-	}
-	if newConfig.StaticDir != "" {
-		config.Current.StaticDir = newConfig.StaticDir
-	}
-	if newConfig.StaticURL != "" {
-		config.Current.StaticURL = newConfig.StaticURL
-	}
-	if newConfig.BeforeStaticSend != nil {
-		config.Current.BeforeStaticSend = newConfig.BeforeStaticSend
-	}
-}
+var ResourceProvider = resources.Provider
+var Configure = config.Configure
 
 func Start(server *echo.Echo, port string) error {
 	pageViewRegistry := views.GetPageViewRegistry()

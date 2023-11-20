@@ -4,36 +4,59 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	config "github.com/ncpa0/htmx-framework/configuration"
+	"github.com/ncpa0/htmx-framework/utils"
 	"github.com/ncpa0/htmx-framework/views"
 )
+
+type View interface {
+	Render(c echo.Context) (*views.RenderedView, error)
+}
+
+func createResponse(c echo.Context, view View) error {
+	ifNoneMatch := c.Request().Header.Get("If-None-Match")
+	renderResult, err := view.Render(c)
+
+	if err != nil {
+		return utils.HandleError(c, err)
+	}
+
+	if renderResult.Etag != "" && ifNoneMatch == renderResult.Etag {
+		return c.NoContent(http.StatusNotModified)
+	}
+
+	if renderResult.Etag != "" {
+		c.Response().Header().Set("ETag", renderResult.Etag)
+	}
+
+	return c.HTML(http.StatusOK, renderResult.Html)
+}
 
 func createPageViewHandler(view *views.PageView) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		selector := c.Request().Header.Get("HX-Target")
 
-		c.Response().Header().Set("Cache-Control", "public, no-cache")
-		ifNoneMatch := c.Request().Header.Get("If-None-Match")
+		c.Response().Header().Set("Vary", "HX-Target")
+		if !view.IsDynamic() {
+			c.Response().Header().Set(
+				"Cache-Control",
+				config.GenerateCacheHeaderForStaticRoute(),
+			)
+		} else {
+			c.Response().Header().Set(
+				"Cache-Control",
+				config.GenerateCacheHeaderForDynamicRoute(),
+			)
+		}
 
 		if selector != "" {
 			child := view.QuerySelector("#" + selector)
 
 			if !child.IsNil() {
-				if ifNoneMatch == child.Get().GetEtag() {
-					return c.NoContent(http.StatusNotModified)
-				}
-
-				c.Response().Header().Set("ETag", child.Get().GetEtag())
-				c.Response().Header().Set("Content-Type", "text/html")
-				return c.String(http.StatusOK, child.Get().ToHtml())
+				return createResponse(c, child.Get())
 			}
 		}
 
-		if ifNoneMatch == view.GetNode().GetEtag() {
-			return c.NoContent(http.StatusNotModified)
-		}
-
-		c.Response().Header().Set("ETag", view.GetNode().GetEtag())
-		c.Response().Header().Set("Content-Type", "text/html")
-		return c.String(http.StatusOK, view.GetNode().ToHtml())
+		return createResponse(c, view)
 	}
 }

@@ -6,6 +6,16 @@ import { Argv } from "./argv";
 import { buildPages } from "./build-pages";
 import { registerGlobalFunctions } from "./components";
 
+type PageMetadata = {
+  isDynamic: boolean;
+  resourceName: string;
+};
+
+type FragmentMetadata = {
+  resourceName: string;
+  hash: string;
+};
+
 async function main() {
   const argv = new Argv("bldr");
 
@@ -34,7 +44,7 @@ async function main() {
 
       const App = mod.default;
 
-      const { htmlFiles, dynamicFragments, assets } = await buildPages(
+      const { pages, dynamicFragments, assets } = await buildPages(
         path.dirname(srcFile),
         <App />,
         args.staticurl
@@ -42,11 +52,18 @@ async function main() {
 
       console.log("Saving results to filesystem...");
       await Promise.all([
-        ...htmlFiles.map(async (page) => {
+        ...pages.map(async (page) => {
           const outfilePath = path.join(outDir, page.route) + ".html";
+          const metaFilePath = path.join(outDir, page.route) + ".meta.json";
           const basedir = path.dirname(outfilePath);
+          const meta: PageMetadata = {
+            isDynamic: page.dynamic != null,
+            resourceName: page.dynamic?.resource ?? "",
+          };
+
           await fs.mkdir(basedir, { recursive: true });
           await Bun.write(outfilePath, page.html);
+          await Bun.write(metaFilePath, JSON.stringify(meta));
         }),
         ...assets.map(async (asset) => {
           const outfilePath = path.join(staticDir, asset.outFile);
@@ -55,7 +72,7 @@ async function main() {
           await Bun.write(outfilePath, asset.contents);
         }),
         ...dynamicFragments.map(async (frag) => {
-          const meta = {
+          const meta: FragmentMetadata = {
             resourceName: frag.name,
             hash: frag.hash,
           };

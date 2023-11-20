@@ -49,8 +49,17 @@ export const DynamicFragment = async <T extends object = Record<never, never>>(
     hxswap += " settle:" + props.settle;
   }
 
+  const headers = JSON.stringify({
+    "HX-Dynamic-Fragment-Request": "/" + bldr.currentRoute.join("/"),
+  });
+
   return (
-    <div hx-trigger={hxtrigger} hx-get={url} hx-swap={hxswap}>
+    <div
+      hx-trigger={hxtrigger}
+      hx-get={url}
+      hx-swap={hxswap}
+      hx-headers={headers}
+    >
       {props.fallback}
     </div>
   );
