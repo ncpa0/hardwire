@@ -2,7 +2,6 @@ package htmxframework
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 
@@ -38,68 +37,32 @@ func Configure(newConfig *config.Configuration) {
 	}
 }
 
-func createRouteHandler(view *views.View) func(c echo.Context) error {
-	return func(c echo.Context) error {
-		selector := c.Request().Header.Get("HX-Target")
-
-		c.Response().Header().Set("Cache-Control", "public, no-cache")
-		ifNoneMatch := c.Request().Header.Get("If-None-Match")
-
-		if selector != "" {
-			child := view.QuerySelector("#" + selector)
-
-			if !child.IsNil() {
-				if ifNoneMatch == child.Get().GetEtag() {
-					return c.NoContent(http.StatusNotModified)
-				}
-
-				c.Response().Header().Set("ETag", child.Get().GetEtag())
-				c.Response().Header().Set("Content-Type", "text/html")
-				return c.String(http.StatusOK, child.Get().ToHtml())
-			}
-		}
-
-		if ifNoneMatch == view.GetNode().GetEtag() {
-			return c.NoContent(http.StatusNotModified)
-		}
-
-		c.Response().Header().Set("ETag", view.GetNode().GetEtag())
-		c.Response().Header().Set("Content-Type", "text/html")
-		return c.String(http.StatusOK, view.GetNode().ToHtml())
-	}
-}
-
 func Start(server *echo.Echo, port string) error {
+	pageViewRegistry := views.GetPageViewRegistry()
+	dynamicFragmentViewRegistry := views.GetDynamicFragmentViewRegistry()
+
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	err = loadViews(wd)
+	err = views.LoadViews(wd)
 	if err != nil {
 		return err
 	}
 
-	addViewEndpoint := func(view *views.View) {
+	pageViewRegistry.ForEach(func(view *views.PageView) {
 		if config.Current.DebugMode {
 			fmt.Printf("Adding new route: %s\n", view.GetRoutePathname())
 		}
-		server.GET(view.GetRoutePathname(), createRouteHandler(view))
-	}
+		server.GET(view.GetRoutePathname(), createPageViewHandler(view))
+	})
 
-	addDynamicFragmentEndpoint := func(view *views.View) {
+	dynamicFragmentViewRegistry.ForEach(func(view *views.DynamicFragmentView) {
 		if config.Current.DebugMode {
 			fmt.Printf("Adding new dynamic fragment under route: %s\n", view.GetRoutePathname())
 		}
 		server.GET(view.GetRoutePathname(), createDynamicFragmentHandler(view))
-	}
-
-	viewRegistry.ForEach(func(view *views.View) {
-		if view.IsDynamicFragment {
-			addDynamicFragmentEndpoint(view)
-		} else {
-			addViewEndpoint(view)
-		}
 	})
 
 	registerActionHandlers(server)

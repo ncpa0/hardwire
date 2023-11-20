@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/labstack/echo"
+	"github.com/ncpa0/htmx-framework/views"
 )
 
 type ActionContext struct {
@@ -13,6 +14,8 @@ type ActionContext struct {
 }
 
 func (ctx *ActionContext) Reload() {
+	pageViewRegistry := views.GetPageViewRegistry()
+
 	ctx.isHandled = true
 	currentUrl, err := url.Parse(ctx.Echo.Request().Header.Get("HX-Current-URL"))
 	if err != nil {
@@ -20,7 +23,7 @@ func (ctx *ActionContext) Reload() {
 		return
 	}
 
-	view := viewRegistry.GetView(currentUrl.Path)
+	view := pageViewRegistry.GetView(currentUrl.Path)
 	if view.IsNil() {
 		ctx.Echo.NoContent(http.StatusResetContent)
 		return
@@ -31,12 +34,14 @@ func (ctx *ActionContext) Reload() {
 }
 
 func (ctx *ActionContext) Redirect(to string) {
+	pageViewRegistry := views.GetPageViewRegistry()
+
 	ctx.isHandled = true
 	if to[0] != '/' {
 		to = "/" + to
 	}
 
-	view := viewRegistry.GetView(to)
+	view := pageViewRegistry.GetView(to)
 	if view.IsNil() {
 		ctx.Echo.Redirect(http.StatusSeeOther, to)
 		return
@@ -174,7 +179,6 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 
 func registerActionHandlers(server *echo.Echo) {
 	for _, action := range actions {
-
 		server.Add(
 			action.GetMethod(),
 			"/__actions/"+action.GetName(),
