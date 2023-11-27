@@ -2,6 +2,7 @@ package resourceprovider
 
 import (
 	"github.com/ncpa0/htmx-framework/utils"
+	. "github.com/ncpa0cpl/convenient-structures"
 )
 
 type DynamicResource struct {
@@ -14,21 +15,21 @@ func (resource *DynamicResource) Handle(c *DynamicRequestContext) (interface{}, 
 }
 
 type DRProvider struct {
-	resources map[string]*DynamicResource
+	resources *Map[string, *DynamicResource]
 }
 
 func (provider *DRProvider) GET(name string, handler func(c *DynamicRequestContext) (interface{}, error)) {
-	provider.resources[name] = &DynamicResource{
+	provider.resources.Set(name, &DynamicResource{
 		name:    name,
 		handler: handler,
-	}
+	})
 }
 
 func (provider *DRProvider) Find(name string) *utils.Option[DynamicResource] {
-	res := provider.resources[name]
+	res, _ := provider.resources.Get(name)
 	return utils.NewOption(res)
 }
 
 var Provider *DRProvider = &DRProvider{
-	resources: make(map[string]*DynamicResource),
+	resources: &Map[string, *DynamicResource]{},
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/ncpa0/htmx-framework/utils"
 	"github.com/ncpa0/htmx-framework/views"
+	. "github.com/ncpa0cpl/convenient-structures"
 )
 
 type ActionContext struct {
@@ -84,7 +85,7 @@ func (ctx *ActionContext) ReloadFragment(fragmentName string) {
 	// ctx.Echo.String(200, view.Get().GetNode().ToHtml())
 }
 
-var actions []iaction = make([]iaction, 0)
+var actions *Array[iaction] = &Array[iaction]{}
 
 func PostAction[Body interface{}](
 	actionName string,
@@ -96,7 +97,7 @@ func PostAction[Body interface{}](
 		handler: handler,
 	}
 
-	actions = append(actions, action)
+	actions.Push(action)
 }
 
 func PutAction[Body interface{}](
@@ -109,7 +110,7 @@ func PutAction[Body interface{}](
 		handler: handler,
 	}
 
-	actions = append(actions, action)
+	actions.Push(action)
 }
 
 func PatchAction[Body interface{}](
@@ -122,7 +123,7 @@ func PatchAction[Body interface{}](
 		handler: handler,
 	}
 
-	actions = append(actions, action)
+	actions.Push(action)
 }
 
 func DeleteAction[Body interface{}](
@@ -135,7 +136,7 @@ func DeleteAction[Body interface{}](
 		handler: handler,
 	}
 
-	actions = append(actions, action)
+	actions.Push(action)
 }
 
 func GetAction[Body interface{}](
@@ -148,7 +149,7 @@ func GetAction[Body interface{}](
 		handler: handler,
 	}
 
-	actions = append(actions, action)
+	actions.Push(action)
 }
 
 type action[Body interface{}] struct {
@@ -193,7 +194,9 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 }
 
 func registerActionHandlers(server *echo.Echo) {
-	for _, action := range actions {
+	actIterator := actions.Iterator()
+	for !actIterator.Done() {
+		action, _ := actIterator.Next()
 		server.Add(
 			action.GetMethod(),
 			"/__actions/"+action.GetName(),

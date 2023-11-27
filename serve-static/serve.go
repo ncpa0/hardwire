@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/ncpa0/htmx-framework/utils"
+	. "github.com/ncpa0cpl/convenient-structures"
 )
 
 type StaticFile struct {
@@ -21,7 +22,7 @@ type StaticFile struct {
 	Etag              string
 }
 
-var staticFiles []*StaticFile = []*StaticFile{}
+var staticFiles *Array[*StaticFile] = &Array[*StaticFile]{}
 
 func detectContentType(filepath string, content []byte) string {
 	httpDet := http.DetectContentType(content)
@@ -192,15 +193,17 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 			content, ctype, modTime, err := getStaticFile(filepath)
 
 			if err == nil {
-				staticFiles = append(staticFiles, &StaticFile{
-					Path:              filepath,
-					RelPath:           relativePath,
-					Content:           content,
-					ContentType:       ctype,
-					Etag:              utils.HashBytes(content),
-					LastModifiedAt:    modTime,
-					LastModifiedAtRFC: modTime.Format(http.TimeFormat),
-				})
+				staticFiles.Push(
+					&StaticFile{
+						Path:              filepath,
+						RelPath:           relativePath,
+						Content:           content,
+						ContentType:       ctype,
+						Etag:              utils.HashBytes(content),
+						LastModifiedAt:    modTime,
+						LastModifiedAtRFC: modTime.Format(http.TimeFormat),
+					},
+				)
 			}
 		}
 		return nil
@@ -208,7 +211,9 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 
 	server.GET(baseUrl+"/*", func(c echo.Context) error {
 		routePath := c.Param("*")
-		for _, file := range staticFiles {
+		sfIterator := staticFiles.Iterator()
+		for !sfIterator.Done() {
+			file, _ := sfIterator.Next()
 			if file.RelPath == routePath {
 				file.Revalidate()
 				return sendFile(file, c, conf)
@@ -230,7 +235,7 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 				LastModifiedAt:    modTime,
 				LastModifiedAtRFC: modTime.Format(http.TimeFormat),
 			}
-			staticFiles = append(staticFiles, file)
+			staticFiles.Push(file)
 
 			return sendFile(file, c, conf)
 		}

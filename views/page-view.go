@@ -12,6 +12,7 @@ import (
 	"github.com/ncpa0/htmx-framework/configuration"
 	resources "github.com/ncpa0/htmx-framework/resource-provider"
 	"github.com/ncpa0/htmx-framework/utils"
+	. "github.com/ncpa0cpl/convenient-structures"
 	"golang.org/x/net/html"
 )
 
@@ -22,8 +23,8 @@ type PageView struct {
 	routePathname    string
 	isDynamic        bool
 	requiredResource string
-	queryCache       map[string]*NodeProxy
-	queryAllCache    map[string][]*NodeProxy
+	queryCache       *Map[string, *NodeProxy]
+	queryAllCache    *Map[string, *Array[*NodeProxy]]
 	document         *NodeProxy
 }
 
@@ -119,8 +120,8 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 		routePathname:    routePathname,
 		isDynamic:        metaFile.IsDynamic,
 		requiredResource: metaFile.ResourceName,
-		queryCache:       make(map[string]*NodeProxy),
-		queryAllCache:    make(map[string][]*NodeProxy),
+		queryCache:       &Map[string, *NodeProxy]{},
+		queryAllCache:    &Map[string, *Array[*NodeProxy]]{},
 		document: &NodeProxy{
 			node:     doc,
 			raw:      rawHtml,
@@ -178,7 +179,7 @@ func (v *PageView) MatchesRoute(routePathname string) bool {
 
 func (v *PageView) QuerySelector(selector string) *utils.Option[NodeProxy] {
 	// first check cache
-	if cached, ok := v.queryCache[selector]; ok {
+	if cached, ok := v.queryCache.Get(selector); ok {
 		return utils.NewOption(cached)
 	}
 
@@ -206,17 +207,15 @@ func (v *PageView) QuerySelector(selector string) *utils.Option[NodeProxy] {
 		template:   templ,
 	}
 
-	v.queryCache[selector] = node
+	v.queryCache.Set(selector, node)
 
 	return utils.NewOption(node)
 }
 
 func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 	// first check cache
-	if cached, ok := v.queryAllCache[selector]; ok {
-		result := make([]*NodeProxy, len(cached))
-		copy(result, cached)
-		return result
+	if cached, ok := v.queryAllCache.Get(selector); ok {
+		return cached.ToSlice()
 	}
 
 	query := utils.NewTranslator(selector).XPathQuery()
@@ -243,9 +242,7 @@ func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 		result = append(result, node)
 	}
 
-	cacheEntry := make([]*NodeProxy, len(result))
-	copy(cacheEntry, result)
-	v.queryAllCache[selector] = cacheEntry
+	v.queryAllCache.Set(selector, NewArray(result).Copy())
 
 	return result
 }

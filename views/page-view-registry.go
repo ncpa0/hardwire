@@ -1,23 +1,28 @@
 package views
 
-import "github.com/ncpa0/htmx-framework/utils"
+import (
+	"github.com/ncpa0/htmx-framework/utils"
+	. "github.com/ncpa0cpl/convenient-structures"
+)
 
 type PageViewRegistry struct {
-	views []*PageView
+	views *Array[*PageView]
 }
 
 func NewViewRegistry() *PageViewRegistry {
 	return &PageViewRegistry{
-		views: []*PageView{},
+		views: &Array[*PageView]{},
 	}
 }
 
 func (vr *PageViewRegistry) Register(view *PageView) {
-	vr.views = append(vr.views, view)
+	vr.views.Push(view)
 }
 
 func (vr *PageViewRegistry) GetView(routePathname string) *utils.Option[PageView] {
-	for _, view := range vr.views {
+	viewIterator := vr.views.Iterator()
+	for !viewIterator.Done() {
+		view, _ := viewIterator.Next()
 		if view.MatchesRoute(routePathname) {
 			return utils.NewOption(view)
 		}
@@ -27,7 +32,9 @@ func (vr *PageViewRegistry) GetView(routePathname string) *utils.Option[PageView
 }
 
 func (vr *PageViewRegistry) ForEach(cb func(view *PageView)) {
-	for _, view := range vr.views {
+	viewIterator := vr.views.Iterator()
+	for !viewIterator.Done() {
+		view, _ := viewIterator.Next()
 		cb(view)
 	}
 }

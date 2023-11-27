@@ -1,6 +1,6 @@
 module github.com/ncpa0/htmx-framework
 
-go 1.21.3
+go 1.21.4
 
 require (
 	github.com/antchfx/htmlquery v1.3.0 // indirect
@@ -13,6 +13,7 @@ require (
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/ncpa0cpl/convenient-structures v0.0.0-20231127113943-08d3c9127a1a // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect

@@ -1,23 +1,28 @@
 package views
 
-import "github.com/ncpa0/htmx-framework/utils"
+import (
+	"github.com/ncpa0/htmx-framework/utils"
+	. "github.com/ncpa0cpl/convenient-structures"
+)
 
 type DynamicFragmentViewRegistry struct {
-	views []*DynamicFragmentView
+	views *Array[*DynamicFragmentView]
 }
 
 func NewDynamicFragmentViewRegistry() *DynamicFragmentViewRegistry {
 	return &DynamicFragmentViewRegistry{
-		views: []*DynamicFragmentView{},
+		views: &Array[*DynamicFragmentView]{},
 	}
 }
 
 func (vr *DynamicFragmentViewRegistry) Register(view *DynamicFragmentView) {
-	vr.views = append(vr.views, view)
+	vr.views.Push(view)
 }
 
 func (vr *DynamicFragmentViewRegistry) GetFragment(routePathname string) *utils.Option[DynamicFragmentView] {
-	for _, view := range vr.views {
+	viewsIterator := vr.views.Iterator()
+	for !viewsIterator.Done() {
+		view, _ := viewsIterator.Next()
 		if view.MatchesRoute(routePathname) {
 			return utils.NewOption(view)
 		}
@@ -27,7 +32,9 @@ func (vr *DynamicFragmentViewRegistry) GetFragment(routePathname string) *utils.
 }
 
 func (vr *DynamicFragmentViewRegistry) ForEach(cb func(view *DynamicFragmentView)) {
-	for _, view := range vr.views {
+	viewsIterator := vr.views.Iterator()
+	for !viewsIterator.Done() {
+		view, _ := viewsIterator.Next()
 		cb(view)
 	}
 }
