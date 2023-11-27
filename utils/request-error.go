@@ -25,6 +25,7 @@ type Sender interface {
 
 func HandleError(c echo.Context, err error) error {
 	sender, ok := err.(Sender)
+	fmt.Println(err)
 	if ok {
 		return sender.SendResponse(c)
 	}

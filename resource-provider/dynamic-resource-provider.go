@@ -31,5 +31,5 @@ func (provider *DRProvider) Find(name string) *utils.Option[DynamicResource] {
 }
 
 var Provider *DRProvider = &DRProvider{
-	resources: &Map[string, *DynamicResource]{},
+	resources: NewMap(map[string]*DynamicResource{}),
 }

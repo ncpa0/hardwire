@@ -17,15 +17,15 @@ import (
 )
 
 type PageView struct {
-	root             string
-	title            string
-	filepath         string
-	routePathname    string
-	isDynamic        bool
-	requiredResource string
-	queryCache       *Map[string, *NodeProxy]
-	queryAllCache    *Map[string, *Array[*NodeProxy]]
-	document         *NodeProxy
+	root              string
+	title             string
+	filepath          string
+	routePathname     string
+	isDynamic         bool
+	requiredResources *Map[string, string]
+	queryCache        *Map[string, *NodeProxy]
+	queryAllCache     *Map[string, *Array[*NodeProxy]]
+	document          *NodeProxy
 }
 
 type NodeProxy struct {
@@ -113,15 +113,20 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 		}
 	}
 
+	requiredResources := NewMap(map[string]string{})
+	for _, res := range metaFile.Resources {
+		requiredResources.Set(res.Key, res.Res)
+	}
+
 	view := &PageView{
-		root:             root,
-		title:            title,
-		filepath:         filepath,
-		routePathname:    routePathname,
-		isDynamic:        metaFile.IsDynamic,
-		requiredResource: metaFile.ResourceName,
-		queryCache:       &Map[string, *NodeProxy]{},
-		queryAllCache:    &Map[string, *Array[*NodeProxy]]{},
+		root:              root,
+		title:             title,
+		filepath:          filepath,
+		routePathname:     routePathname,
+		isDynamic:         metaFile.IsDynamic,
+		requiredResources: requiredResources,
+		queryCache:        NewMap(map[string]*NodeProxy{}),
+		queryAllCache:     NewMap(map[string]*Array[*NodeProxy]{}),
 		document: &NodeProxy{
 			node:     doc,
 			raw:      rawHtml,
@@ -271,27 +276,34 @@ func (node *NodeProxy) Render(c echo.Context) (*RenderedView, error) {
 	var etag string
 
 	if node.parentRoot.isDynamic {
-		resource := resources.Provider.Find(node.parentRoot.requiredResource)
+		templateData := NewMap(map[string]interface{}{})
 
-		if resource.IsNil() {
-			c.String(404, "resource not found")
-			return nil, fmt.Errorf("resource not found: '%s'", node.parentRoot.requiredResource)
-		}
+		resIterator := node.parentRoot.requiredResources.Iterator()
+		for !resIterator.Done() {
+			entry, _ := resIterator.Next()
 
-		requestContext := resources.NewDynamicRequestContext(
-			c,
-			paramMap(c),
-			node.parentRoot.routePathname,
-		)
+			handler := resources.Provider.Find(entry.Value)
+			if handler.IsNil() {
+				c.String(404, "resource not found")
+				return nil, fmt.Errorf("resource not found: '%s'", entry.Value)
+			}
 
-		resourceValue, err := resource.Get().Handle(requestContext)
+			requestContext := resources.NewDynamicRequestContext(
+				c,
+				paramMap(c),
+				node.parentRoot.routePathname,
+			)
 
-		if err != nil {
-			return nil, err
+			resourceValue, err := handler.Get().Handle(requestContext)
+			if err != nil {
+				return nil, err
+			}
+
+			templateData.Set(entry.Key, resourceValue)
 		}
 
 		var buff bytes.Buffer
-		err = node.template.Execute(&buff, resourceValue)
+		err := node.template.Execute(&buff, templateData.ToMap())
 		if err != nil {
 			return nil, err
 		}

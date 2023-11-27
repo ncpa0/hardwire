@@ -32,7 +32,7 @@ export const StaticRoute = (
           registerRoute: app.registerRoute,
           addRouter: app.addRouter,
           registerDynamicFragment: app.registerDynamicFragment,
-          markRouteDynamic: app.markRouteDynamic,
+          registerRouteDynamicResource: app.registerRouteDynamicResource,
         }}
       >
         {props.children}
@@ -61,7 +61,9 @@ export const DynamicRoute = <T extends object = Record<never, never>>(
   );
 
   if (pathCmp(app.selectedRoute[0] ?? "", props.path)) {
-    app.markRouteDynamic(props.require);
+    const [resourceKey, depth] = app.registerRouteDynamicResource(
+      props.require
+    );
     return (
       <builderCtx.Provider
         value={{
@@ -74,10 +76,11 @@ export const DynamicRoute = <T extends object = Record<never, never>>(
           registerRoute: app.registerRoute,
           addRouter: app.addRouter,
           registerDynamicFragment: app.registerDynamicFragment,
-          markRouteDynamic: app.markRouteDynamic,
+          registerRouteDynamicResource: app.registerRouteDynamicResource,
         }}
       >
-        {props.render(structProxy(""))}
+        {`{{$root${depth} := .${resourceKey}}}`}
+        {props.render(structProxy(`$root${depth}`))}
       </builderCtx.Provider>
     );
   }

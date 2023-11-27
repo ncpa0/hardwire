@@ -1,5 +1,6 @@
 import { renderToHtmlAsync } from "jsxte";
 import { builderCtx } from "./contexts";
+import { capitalize } from "./utils/capitalize";
 import { pathCmp } from "./utils/paths";
 
 type RouteDefinition = {
@@ -81,7 +82,7 @@ export const collectRoutes = async (
           getRouteContainerId,
           addRouter,
           registerDynamicFragment: () => "",
-          markRouteDynamic: () => void 0,
+          registerRouteDynamicResource: (r) => [capitalize(r), 1],
         }}
       >
         {tree}

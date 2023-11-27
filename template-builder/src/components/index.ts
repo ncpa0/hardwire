@@ -1,3 +1,4 @@
+import { DynamicFragment } from "./dynamic-fragment";
 import { createFormAction } from "./form-action";
 import { If } from "./gotmpl-generator/if";
 import { MapArray } from "./gotmpl-generator/range";
@@ -6,7 +7,6 @@ import { Link } from "./link";
 import { DynamicRoute, StaticRoute } from "./route";
 import { Switch } from "./router";
 import { Script } from "./script";
-import { DynamicFragment } from "./stream";
 import { Style } from "./style";
 
 export const GLOBALS = {

@@ -46,3 +46,9 @@ export const structProxy = <T extends object>(name: string): StructProxy<T> => {
     },
   }) as any;
 };
+
+export const valueProxy = <T extends string | number | boolean>(
+  value: T
+): ValueProxy<T> => {
+  return structProxy(value as any) as any;
+};

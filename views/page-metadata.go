@@ -6,8 +6,11 @@ import (
 )
 
 type pageMetafile struct {
-	IsDynamic    bool   `json:"isDynamic"`
-	ResourceName string `json:"resourceName"`
+	IsDynamic bool `json:"isDynamic"`
+	Resources [](struct {
+		Key string `json:"key"`
+		Res string `json:"res"`
+	}) `json:"resources"`
 }
 
 func loadPageMetafile(filepath string) (*pageMetafile, error) {

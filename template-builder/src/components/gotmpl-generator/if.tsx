@@ -2,7 +2,7 @@ import { ComponentApi, defineContext } from "jsxte";
 import { ValueProxy } from "./generate-go-templ";
 
 type IfProps = JSXTE.PropsWithChildren<{
-  condition: { varname(): string };
+  condition: (conditionBuilder: ConditionBuilder) => ConditionBuilder;
   negate?: boolean;
 }>;
 
@@ -11,16 +11,16 @@ const ifCtx = defineContext<{ onElse(templ: string): void }>();
 export const If = async (props: IfProps, comApi: ComponentApi) => {
   let elseTempl: string = "";
   const onElse = (templ: string) => {
-    elseTempl = ` {{else}} ${templ} `;
+    elseTempl = ` {{else}}\n${templ}\n`;
   };
 
   const forTrue = await comApi.renderAsync(
     <ifCtx.Provider value={{ onElse }}>{props.children}</ifCtx.Provider>
   );
 
-  return `{{if${
-    props.negate ? " not " : ""
-  } ${props.condition.varname()}}} ${forTrue}${elseTempl} {{end}}`;
+  return `{{if${props.negate ? " not " : ""} ${props
+    .condition(new ConditionBuilder())
+    .varname()}}}\n${forTrue}${elseTempl}\n{{end}}`;
 };
 
 export const Else = async (
@@ -36,15 +36,14 @@ type Comparable = string | number;
 type ComplexCondition = ConditionBuilder | ValueProxy<boolean>;
 
 class ConditionBuilder {
-  private content: string = "";
+  protected content: string = "";
 
-  private varname() {
+  varname(): string {
     return this.content;
   }
 
   not(condition: ComplexCondition): ConditionBuilder {
     const next = new ConditionBuilder();
-    // @ts-expect-error
     next.content = `not ${condition.varname()}`;
     return next;
   }
@@ -54,7 +53,6 @@ class ConditionBuilder {
     next.content = `${conditions.at(-1).varname()}`;
     for (let i = conditions.length - 2; i >= 0; i--) {
       const c = conditions[i]!;
-      // @ts-expect-error
       next.content = `(and ${c.varname()} ${next.content})`;
     }
     return next;
@@ -65,7 +63,6 @@ class ConditionBuilder {
     next.content = `${conditions.at(-1).varname()}`;
     for (let i = conditions.length - 2; i >= 0; i--) {
       const c = conditions[i]!;
-      // @ts-expect-error
       next.content = `(or ${c.varname()} ${next.content})`;
     }
     return next;
@@ -131,10 +128,3 @@ class ConditionBuilder {
     };
   }
 }
-
-export const condition = (
-  factory: (builder: ConditionBuilder) => ConditionBuilder
-) => {
-  const builder = new ConditionBuilder();
-  return factory(builder) as any as { varname(): string };
-};

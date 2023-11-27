@@ -3,6 +3,7 @@ import path from "node:path";
 import prettier from "prettier";
 import { collectRoutes } from "./collect-routes";
 import { builderCtx } from "./contexts";
+import { capitalize } from "./utils/capitalize";
 
 const noop = () => {};
 
@@ -22,7 +23,10 @@ type Page = {
   route: string;
   html: string;
   dynamic?: {
-    resource: string;
+    resources: {
+      key: string;
+      res: string;
+    }[];
   };
 };
 
@@ -102,10 +106,14 @@ export const buildPages = async (
 
   for (const route of routes.getAll()) {
     console.log(`Building page '${route.path}.html'`);
-    let requiredResource: string | undefined = undefined;
+    let requiredResources: { key: string; res: string }[] = [];
 
-    const markRouteDynamic = (resource: string) => {
-      requiredResource = resource;
+    const registerRouteDynamicResource = (
+      resource: string
+    ): [string, number] => {
+      const key = capitalize(resource.replace(/[^a-zA-Z]/g, "").trim());
+      requiredResources.push({ key, res: resource });
+      return [key, requiredResources.length];
     };
 
     const html = await renderToHtmlAsync(
@@ -123,7 +131,7 @@ export const buildPages = async (
             getRouteContainerId,
             addRouter: noop,
             registerDynamicFragment,
-            markRouteDynamic,
+            registerRouteDynamicResource,
           }}
         >
           {tree}
@@ -136,9 +144,9 @@ export const buildPages = async (
       html: await prettier.format(html, { parser: "html" }),
     };
 
-    if (requiredResource) {
+    if (requiredResources.length > 0) {
       page.dynamic = {
-        resource: requiredResource,
+        resources: requiredResources,
       };
     }
 

@@ -30,7 +30,8 @@ export const DynamicFragment = async <T extends object = Record<never, never>>(
   const bldr = compApi.ctx.getOrFail(builderCtx);
   const templ = await compApi.renderAsync(
     <dynamic-fragment class={props.class}>
-      {props.render(structProxy(""))}
+      {`{{$frag_root := .}}`}
+      {props.render(structProxy("$frag_root"))}
     </dynamic-fragment>
   );
 

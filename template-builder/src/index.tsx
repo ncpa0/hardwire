@@ -8,7 +8,10 @@ import { registerGlobalFunctions } from "./components";
 
 type PageMetadata = {
   isDynamic: boolean;
-  resourceName: string;
+  resources?: {
+    key: string;
+    res: string;
+  }[];
 };
 
 type FragmentMetadata = {
@@ -58,7 +61,7 @@ async function main() {
           const basedir = path.dirname(outfilePath);
           const meta: PageMetadata = {
             isDynamic: page.dynamic != null,
-            resourceName: page.dynamic?.resource ?? "",
+            resources: page.dynamic?.resources,
           };
 
           await fs.mkdir(basedir, { recursive: true });

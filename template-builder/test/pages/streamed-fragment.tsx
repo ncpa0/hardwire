@@ -1,6 +1,6 @@
+import { DynamicFragment } from "../../src/components/dynamic-fragment";
 import { If, condition } from "../../src/components/gotmpl-generator/if";
 import { Range } from "../../src/components/gotmpl-generator/range";
-import { DynamicFragment } from "../../src/components/stream";
 
 type User = {
   username: string;
