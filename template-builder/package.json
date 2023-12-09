@@ -1,9 +1,16 @@
 {
+  "version": "0.0.1-beta.1",
   "name": "hardwire-html-generator",
-  "module": "src/index.tsx",
-  "types": "src/index.tsx",
-  "bin": "src/index.tsx",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "bin": "src/index.ts",
   "type": "module",
+  "files": [
+    "./src/**/*",
+    "./bun.lockb",
+    "./bunfig.toml",
+    "./package.json"
+  ],
   "scripts": {
     "test": "NODE_ENV=production bun test"
   },
@@ -13,13 +20,13 @@
     "adwavecss": "0.0.6",
     "adwaveui": "0.0.2",
     "bun-types": "latest",
-    "typescript": "^5.0.0"
+    "typescript": "latest"
   },
   "peerDependencies": {},
   "dependencies": {
-    "csso": "^5.0.5",
-    "jsxte": "latest",
-    "minimist": "^1.2.8",
-    "prettier": "^3.0.3"
+    "csso": "~5.0.5",
+    "jsxte": "~3.1.8",
+    "minimist": "~1.2.8",
+    "prettier": "~3.0.3"
   }
 }

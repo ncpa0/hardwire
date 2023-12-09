@@ -1,15 +1,14 @@
-# htmx-framework
+# hardwire-html-generator
 
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
+Init:
 
 ```bash
-bun run src/index.ts
+bun x hardwire-html-generator init --dir .
+
 ```
 
-This project was created using `bun init` in bun v1.0.7. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+Build:
+
+```bash
+bun x hardwire-html-generator build --src ./index.tsx --outdir ./html --staticdir ./static --staticurl "/static"
+```

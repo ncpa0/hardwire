@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo"
 	config "github.com/ncpa0/hardwire/configuration"
 	resources "github.com/ncpa0/hardwire/resource-provider"
