@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/ncpa0/htmx-framework/utils"
+	"github.com/ncpa0/hardwire/utils"
 )
 
 type DynamicRequestContext struct {

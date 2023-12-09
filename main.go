@@ -1,4 +1,4 @@
-package htmxframework
+package hardwire
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo"
-	config "github.com/ncpa0/htmx-framework/configuration"
-	resources "github.com/ncpa0/htmx-framework/resource-provider"
-	servestatic "github.com/ncpa0/htmx-framework/serve-static"
-	"github.com/ncpa0/htmx-framework/views"
+	config "github.com/ncpa0/hardwire/configuration"
+	resources "github.com/ncpa0/hardwire/resource-provider"
+	servestatic "github.com/ncpa0/hardwire/serve-static"
+	"github.com/ncpa0/hardwire/views"
 )
 
 type DynamicRequestContext = resources.DynamicRequestContext

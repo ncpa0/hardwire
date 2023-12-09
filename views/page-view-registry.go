@@ -1,7 +1,7 @@
 package views
 
 import (
-	"github.com/ncpa0/htmx-framework/utils"
+	"github.com/ncpa0/hardwire/utils"
 	. "github.com/ncpa0cpl/convenient-structures"
 )
 

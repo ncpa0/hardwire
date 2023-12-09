@@ -1,5 +1,5 @@
 {
-  "name": "htmx-framework",
+  "name": "hardwire-html-generator",
   "module": "src/index.tsx",
   "types": "src/index.tsx",
   "bin": "src/index.tsx",

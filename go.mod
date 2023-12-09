@@ -1,4 +1,4 @@
-module github.com/ncpa0/htmx-framework
+module github.com/ncpa0/hardwire
 
 go 1.21.4
 

@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/ncpa0/htmx-framework/utils"
+	"github.com/ncpa0/hardwire/utils"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -9,9 +9,9 @@ import (
 
 	"github.com/antchfx/htmlquery"
 	"github.com/labstack/echo"
-	"github.com/ncpa0/htmx-framework/configuration"
-	resources "github.com/ncpa0/htmx-framework/resource-provider"
-	"github.com/ncpa0/htmx-framework/utils"
+	"github.com/ncpa0/hardwire/configuration"
+	resources "github.com/ncpa0/hardwire/resource-provider"
+	"github.com/ncpa0/hardwire/utils"
 	. "github.com/ncpa0cpl/convenient-structures"
 	"golang.org/x/net/html"
 )

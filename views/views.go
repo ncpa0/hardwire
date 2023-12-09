@@ -5,9 +5,9 @@ import (
 	"path"
 	"strings"
 
-	config "github.com/ncpa0/htmx-framework/configuration"
-	templatebuilder "github.com/ncpa0/htmx-framework/template-builder"
-	"github.com/ncpa0/htmx-framework/utils"
+	config "github.com/ncpa0/hardwire/configuration"
+	templatebuilder "github.com/ncpa0/hardwire/template-builder"
+	"github.com/ncpa0/hardwire/utils"
 )
 
 func IsTemplate(filepath string) bool {

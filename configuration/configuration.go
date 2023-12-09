@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	servestatic "github.com/ncpa0/htmx-framework/serve-static"
+	servestatic "github.com/ncpa0/hardwire/serve-static"
 )
 
 type CachingPolicy struct {

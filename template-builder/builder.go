@@ -6,8 +6,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/ncpa0/htmx-framework/configuration"
-	"github.com/ncpa0/htmx-framework/utils"
+	"github.com/ncpa0/hardwire/configuration"
+	"github.com/ncpa0/hardwire/utils"
 )
 
 //go:embed node_modules src bunfig.toml package.json

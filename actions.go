@@ -1,12 +1,12 @@
-package htmxframework
+package hardwire
 
 import (
 	"net/http"
 	"net/url"
 
 	"github.com/labstack/echo"
-	"github.com/ncpa0/htmx-framework/utils"
-	"github.com/ncpa0/htmx-framework/views"
+	"github.com/ncpa0/hardwire/utils"
+	"github.com/ncpa0/hardwire/views"
 	. "github.com/ncpa0cpl/convenient-structures"
 )
 

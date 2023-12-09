@@ -1,12 +1,12 @@
-package htmxframework
+package hardwire
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	config "github.com/ncpa0/htmx-framework/configuration"
-	"github.com/ncpa0/htmx-framework/utils"
-	"github.com/ncpa0/htmx-framework/views"
+	config "github.com/ncpa0/hardwire/configuration"
+	"github.com/ncpa0/hardwire/utils"
+	"github.com/ncpa0/hardwire/views"
 )
 
 type View interface {

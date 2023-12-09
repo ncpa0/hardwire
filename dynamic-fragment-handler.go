@@ -1,13 +1,13 @@
-package htmxframework
+package hardwire
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	config "github.com/ncpa0/htmx-framework/configuration"
-	resources "github.com/ncpa0/htmx-framework/resource-provider"
-	"github.com/ncpa0/htmx-framework/utils"
-	"github.com/ncpa0/htmx-framework/views"
+	config "github.com/ncpa0/hardwire/configuration"
+	resources "github.com/ncpa0/hardwire/resource-provider"
+	"github.com/ncpa0/hardwire/utils"
+	"github.com/ncpa0/hardwire/views"
 )
 
 func createDynamicFragmentHandler(view *views.DynamicFragmentView) func(c echo.Context) error {
