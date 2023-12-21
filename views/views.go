@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -18,26 +19,35 @@ var pageViewRegistry = NewViewRegistry()
 var dynamicFragmentViewRegistry = NewDynamicFragmentViewRegistry()
 
 func LoadViews(wd string) error {
-	viewsFullPath := config.Current.ViewsDir
-	if !path.IsAbs(viewsFullPath) {
-		viewsFullPath = path.Join(wd, viewsFullPath)
+	htmlDir := config.Current.HtmlDir
+	if !path.IsAbs(htmlDir) {
+		htmlDir = path.Join(wd, htmlDir)
 	}
 
-	err := templatebuilder.BuildPages(
-		config.Current.Entrypoint,
-		viewsFullPath,
-		config.Current.StaticDir,
-		config.Current.StaticURL,
-	)
+	if !config.Current.NoBuild {
+		if config.Current.CleanBuild {
+			err := os.RemoveAll(htmlDir)
+			if err != nil {
+				return err
+			}
+		}
 
-	if err != nil {
-		return err
+		err := templatebuilder.BuildPages(
+			config.Current.Entrypoint,
+			htmlDir,
+			config.Current.StaticDir,
+			config.Current.StaticURL,
+		)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	if config.Current.DebugMode {
-		fmt.Printf("Loading view from %s\n", viewsFullPath)
+		fmt.Printf("Loading view from %s\n", htmlDir)
 	}
-	err = utils.Walk(viewsFullPath, func(root string, dirs []string, files []string) error {
+	err := utils.Walk(htmlDir, func(root string, dirs []string, files []string) error {
 		for _, file := range files {
 			ext := path.Ext(file)
 
@@ -46,29 +56,29 @@ func LoadViews(wd string) error {
 			}
 
 			fullPath := path.Join(root, file)
-			relToView := fullPath[len(viewsFullPath):]
+			relToView := fullPath[len(htmlDir):]
 
 			if IsTemplate(relToView) {
-				view, err := NewDynamicFragmentView(viewsFullPath, relToView)
+				view, err := NewDynamicFragmentView(htmlDir, relToView)
 				if err != nil {
 					return err
 				}
 
 				if config.Current.DebugMode {
 					fmt.Printf("Loading view from file %s\n", file)
-					fmt.Printf("  ROOT: %s PATH: %s\n", viewsFullPath, relToView)
+					fmt.Printf("  ROOT: %s PATH: %s\n", htmlDir, relToView)
 				}
 
 				dynamicFragmentViewRegistry.Register(view)
 			} else {
-				view, err := NewPageView(viewsFullPath, relToView)
+				view, err := NewPageView(htmlDir, relToView)
 				if err != nil {
 					return err
 				}
 
 				if config.Current.DebugMode {
 					fmt.Printf("Loading view from file %s\n", file)
-					fmt.Printf("  ROOT: %s PATH: %s\n", viewsFullPath, relToView)
+					fmt.Printf("  ROOT: %s PATH: %s\n", htmlDir, relToView)
 				}
 
 				pageViewRegistry.Register(view)

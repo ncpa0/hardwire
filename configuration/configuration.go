@@ -37,7 +37,7 @@ type Configuration struct {
 	// The directory to which output the generated html files, and from which those will be hosted.
 	//
 	// Defaults to `views`.
-	ViewsDir string
+	HtmlDir string
 	// The directory to which output the static files, and from which those will be hosted.
 	//
 	// Defaults to `static`.
@@ -45,7 +45,15 @@ type Configuration struct {
 	// The URL path from under which the static files will be hosted.
 	//
 	// Defaults to `/static`.
-	StaticURL        string
+	StaticURL string
+	// Skip the html generation step.
+	//
+	// Defaults to `false`.
+	NoBuild bool
+	// Clean the html directory before generating the html files.
+	//
+	// Defaults to `false`.
+	CleanBuild       bool
 	Caching          *CachingConfig
 	BeforeStaticSend func(resp *servestatic.StaticResponse, c echo.Context) error
 }
@@ -54,9 +62,11 @@ var Current *Configuration = &Configuration{
 	StripExtension: false,
 	DebugMode:      false,
 	Entrypoint:     "index.tsx",
-	ViewsDir:       "views",
+	HtmlDir:        "views",
 	StaticDir:      "static",
 	StaticURL:      "/static",
+	NoBuild:        false,
+	CleanBuild:     false,
 	Caching: &CachingConfig{
 		StaticRoutes: &CachingPolicy{
 			MaxAge: int(time.Hour.Seconds()),
@@ -77,8 +87,8 @@ func Configure(newConfig *Configuration) {
 	if newConfig.Entrypoint != "" {
 		Current.Entrypoint = newConfig.Entrypoint
 	}
-	if newConfig.ViewsDir != "" {
-		Current.ViewsDir = newConfig.ViewsDir
+	if newConfig.HtmlDir != "" {
+		Current.HtmlDir = newConfig.HtmlDir
 	}
 	if newConfig.StaticDir != "" {
 		Current.StaticDir = newConfig.StaticDir
@@ -88,6 +98,12 @@ func Configure(newConfig *Configuration) {
 	}
 	if newConfig.BeforeStaticSend != nil {
 		Current.BeforeStaticSend = newConfig.BeforeStaticSend
+	}
+	if newConfig.NoBuild {
+		Current.NoBuild = true
+	}
+	if newConfig.CleanBuild {
+		Current.CleanBuild = true
 	}
 	if newConfig.Caching != nil {
 		if newConfig.Caching.StaticRoutes != nil {
