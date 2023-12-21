@@ -142,6 +142,10 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 	return view, nil
 }
 
+func (v *PageView) GetResourceKeys() *Array[string] {
+	return v.requiredResources.Values()
+}
+
 func (v *PageView) IsDynamic() bool {
 	return v.isDynamic
 }

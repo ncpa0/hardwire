@@ -28,6 +28,18 @@ func redirectHandler(to string) echo.HandlerFunc {
 	}
 }
 
+func validateResourcesAvailable(resource []string) error {
+	for _, resKey := range resource {
+		r := ResourceProvider.Find(resKey)
+
+		if r.IsNil() {
+			return fmt.Errorf("'%s' resource doesn't have a provider registered", resKey)
+		}
+	}
+
+	return nil
+}
+
 func Start(server *echo.Echo, port string) error {
 	pageViewRegistry := views.GetPageViewRegistry()
 	dynamicFragmentViewRegistry := views.GetDynamicFragmentViewRegistry()
@@ -42,23 +54,47 @@ func Start(server *echo.Echo, port string) error {
 		return err
 	}
 
-	pageViewRegistry.ForEach(func(view *views.PageView) {
-		if config.Current.DebugMode {
-			fmt.Printf("Adding new route: %s\n", view.GetRoutePathname())
+	err = pageViewRegistry.ForEach(func(view *views.PageView) error {
+		fmt.Printf("Adding new route: %s\n", view.GetRoutePathname())
+
+		if view.IsDynamic() {
+			err := validateResourcesAvailable(view.GetResourceKeys().ToSlice())
+			if err != nil {
+				return err
+			}
 		}
+
 		pathname := view.GetRoutePathname()
 		server.GET(pathname, createPageViewHandler(view))
 		server.GET(pathname+"/", redirectHandler(pathname))
+
+		return nil
 	})
 
-	dynamicFragmentViewRegistry.ForEach(func(view *views.DynamicFragmentView) {
+	if err != nil {
+		return err
+	}
+
+	err = dynamicFragmentViewRegistry.ForEach(func(view *views.DynamicFragmentView) error {
 		if config.Current.DebugMode {
 			fmt.Printf("Adding new dynamic fragment under route: %s\n", view.GetRoutePathname())
 		}
+
+		err := validateResourcesAvailable([]string{view.GetResourceName()})
+		if err != nil {
+			return err
+		}
+
 		pathname := view.GetRoutePathname()
 		server.GET(pathname, createDynamicFragmentHandler(view))
 		server.GET(pathname+"/", redirectHandler(pathname))
+
+		return nil
 	})
+
+	if err != nil {
+		return err
+	}
 
 	registerActionHandlers(server)
 

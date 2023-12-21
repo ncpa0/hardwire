@@ -31,10 +31,14 @@ func (vr *DynamicFragmentViewRegistry) GetFragment(routePathname string) *utils.
 	return utils.Empty[DynamicFragmentView]()
 }
 
-func (vr *DynamicFragmentViewRegistry) ForEach(cb func(view *DynamicFragmentView)) {
+func (vr *DynamicFragmentViewRegistry) ForEach(cb func(view *DynamicFragmentView) error) error {
 	viewsIterator := vr.views.Iterator()
 	for !viewsIterator.Done() {
 		view, _ := viewsIterator.Next()
-		cb(view)
+		err := cb(view)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }

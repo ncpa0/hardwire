@@ -31,10 +31,14 @@ func (vr *PageViewRegistry) GetView(routePathname string) *utils.Option[PageView
 	return utils.Empty[PageView]()
 }
 
-func (vr *PageViewRegistry) ForEach(cb func(view *PageView)) {
+func (vr *PageViewRegistry) ForEach(cb func(view *PageView) error) error {
 	viewIterator := vr.views.Iterator()
 	for !viewIterator.Done() {
 		view, _ := viewIterator.Next()
-		cb(view)
+		err := cb(view)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
