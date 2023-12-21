@@ -2,19 +2,20 @@ import { ComponentApi } from "jsxte";
 import { builderCtx, routerCtx } from "../contexts";
 
 export const Switch = (
-  props: JSXTE.PropsWithChildren<{ id: string }>,
+  props: JSXTE.PropsWithChildren<{ id: string } & JSX.IntrinsicElements["div"]>,
   compApi: ComponentApi
 ) => {
+  const { children, ...rest } = props;
   const app = compApi.ctx.getOrFail(builderCtx);
   app.addRouter(props.id);
   return (
-    <div id={props.id}>
+    <div {...rest}>
       <routerCtx.Provider
         value={{
-          containerID: props.id,
+          containerID: rest.id,
         }}
       >
-        {props.children}
+        {children}
       </routerCtx.Provider>
     </div>
   );

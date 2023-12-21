@@ -33,6 +33,12 @@ func createResponse(c echo.Context, view View) error {
 }
 
 func createPageViewHandler(view *views.PageView) func(c echo.Context) error {
+	if view.Metadata.ShouldRedirect {
+		return func(c echo.Context) error {
+			return c.Redirect(http.StatusMovedPermanently, view.Metadata.RedirectURL)
+		}
+	}
+
 	return func(c echo.Context) error {
 		selector := c.Request().Header.Get("HX-Target")
 

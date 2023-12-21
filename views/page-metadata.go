@@ -11,6 +11,8 @@ type pageMetafile struct {
 		Key string `json:"key"`
 		Res string `json:"res"`
 	}) `json:"resources"`
+	RedirectURL    string `json:"redirectUrl"`
+	ShouldRedirect bool   `json:"shouldRedirect"`
 }
 
 func loadPageMetafile(filepath string) (*pageMetafile, error) {

@@ -26,6 +26,7 @@ type PageView struct {
 	queryCache        *Map[string, *NodeProxy]
 	queryAllCache     *Map[string, *Array[*NodeProxy]]
 	document          *NodeProxy
+	Metadata          *pageMetafile
 }
 
 type NodeProxy struct {
@@ -133,6 +134,7 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 			etag:     hash,
 			template: templ,
 		},
+		Metadata: metaFile,
 	}
 
 	view.document.parentRoot = view

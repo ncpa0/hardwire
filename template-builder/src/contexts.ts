@@ -33,3 +33,7 @@ Object.defineProperty(global, "ExtFilesCtx", {
   enumerable: false,
   configurable: false,
 });
+
+export const RouteMetaContext = defineContext<{
+  addMetadata(key: string, value: any): void;
+}>();

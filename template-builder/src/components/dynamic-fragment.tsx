@@ -21,6 +21,10 @@ export type DynamicFragmentProps<T extends object> = {
   trigger?: "load" | "revealed";
   swap?: `${number}s` | `${number}ms`;
   settle?: `${number}s` | `${number}ms`;
+  /**
+   * Overrides the accepted language header of the request.
+   */
+  locale?: string;
 };
 
 export const DynamicFragment = async <T extends object = Record<never, never>>(
@@ -50,16 +54,20 @@ export const DynamicFragment = async <T extends object = Record<never, never>>(
     hxswap += " settle:" + props.settle;
   }
 
-  const headers = JSON.stringify({
-    "HX-Dynamic-Fragment-Request": "/" + bldr.currentRoute.join("/"),
-  });
+  const headers: Record<string, string> = {
+    "Hardwire-Dynamic-Fragment-Request": "/" + bldr.currentRoute.join("/"),
+  };
+
+  if (props.locale) {
+    headers["Accept-Language"] = props.locale;
+  }
 
   return (
     <div
       hx-trigger={hxtrigger}
       hx-get={url}
       hx-swap={hxswap}
-      hx-headers={headers}
+      hx-headers={JSON.stringify(headers)}
     >
       {props.fallback}
     </div>

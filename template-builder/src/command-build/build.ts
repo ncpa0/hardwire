@@ -47,6 +47,7 @@ export async function buildCmd(
       const metaFilePath = path.join(outDir, page.route) + ".meta.json";
       const basedir = path.dirname(outfilePath);
       const meta: PageMetadata = {
+        ...page.metadata,
         isDynamic: page.dynamic != null,
         resources: page.dynamic?.resources,
       };

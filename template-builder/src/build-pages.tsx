@@ -2,7 +2,7 @@ import { renderToHtmlAsync } from "jsxte";
 import path from "node:path";
 import prettier from "prettier";
 import { collectRoutes } from "./collect-routes";
-import { builderCtx } from "./contexts";
+import { RouteMetaContext, builderCtx } from "./contexts";
 import { capitalize } from "./utils/capitalize";
 
 const noop = () => {};
@@ -28,6 +28,7 @@ type Page = {
       res: string;
     }[];
   };
+  metadata: Record<string, any>;
 };
 
 export const buildPages = async (
@@ -106,6 +107,13 @@ export const buildPages = async (
 
   for (const route of routes.getAll()) {
     console.log(`Building page '${route.path}.html'`);
+
+    const page: Page = {
+      route: route.path,
+      html: "",
+      metadata: {},
+    };
+
     let requiredResources: { key: string; res: string }[] = [];
 
     const registerRouteDynamicResource = (
@@ -116,33 +124,36 @@ export const buildPages = async (
       return [key, requiredResources.length];
     };
 
+    const addMetadata = (key: string, value: any) => {
+      page.metadata[key] = value;
+    };
+
     const html = await renderToHtmlAsync(
-      <ExtFilesCtx.Provider
-        value={{ register: registerExternalFile, get: getExternalFileUrl }}
-      >
-        <builderCtx.Provider
-          value={{
-            isBuildPhase: true,
-            entrypointDir: entrypointDir,
-            selectedRoute: route.path.split("/"),
-            currentRoute: [],
-            currentRouteTitle: route.title,
-            registerRoute: noop,
-            getRouteContainerId,
-            addRouter: noop,
-            registerDynamicFragment,
-            registerRouteDynamicResource,
-          }}
+      <RouteMetaContext.Provider value={{ addMetadata }}>
+        <ExtFilesCtx.Provider
+          value={{ register: registerExternalFile, get: getExternalFileUrl }}
         >
-          {tree}
-        </builderCtx.Provider>
-      </ExtFilesCtx.Provider>
+          <builderCtx.Provider
+            value={{
+              isBuildPhase: true,
+              entrypointDir: entrypointDir,
+              selectedRoute: route.path.split("/"),
+              currentRoute: [],
+              currentRouteTitle: route.title,
+              registerRoute: noop,
+              getRouteContainerId,
+              addRouter: noop,
+              registerDynamicFragment,
+              registerRouteDynamicResource,
+            }}
+          >
+            {tree}
+          </builderCtx.Provider>
+        </ExtFilesCtx.Provider>
+      </RouteMetaContext.Provider>
     );
 
-    const page: Page = {
-      route: route.path,
-      html: await prettier.format(html, { parser: "html" }),
-    };
+    page.html = await prettier.format(html, { parser: "html" });
 
     if (requiredResources.length > 0) {
       page.dynamic = {

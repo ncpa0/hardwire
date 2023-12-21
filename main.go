@@ -22,6 +22,12 @@ type CachingPolicy = config.CachingPolicy
 var ResourceProvider = resources.Provider
 var Configure = config.Configure
 
+func redirectHandler(to string) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return ctx.Redirect(301, to)
+	}
+}
+
 func Start(server *echo.Echo, port string) error {
 	pageViewRegistry := views.GetPageViewRegistry()
 	dynamicFragmentViewRegistry := views.GetDynamicFragmentViewRegistry()
@@ -40,14 +46,18 @@ func Start(server *echo.Echo, port string) error {
 		if config.Current.DebugMode {
 			fmt.Printf("Adding new route: %s\n", view.GetRoutePathname())
 		}
-		server.GET(view.GetRoutePathname(), createPageViewHandler(view))
+		pathname := view.GetRoutePathname()
+		server.GET(pathname, createPageViewHandler(view))
+		server.GET(pathname+"/", redirectHandler(pathname))
 	})
 
 	dynamicFragmentViewRegistry.ForEach(func(view *views.DynamicFragmentView) {
 		if config.Current.DebugMode {
 			fmt.Printf("Adding new dynamic fragment under route: %s\n", view.GetRoutePathname())
 		}
-		server.GET(view.GetRoutePathname(), createDynamicFragmentHandler(view))
+		pathname := view.GetRoutePathname()
+		server.GET(pathname, createDynamicFragmentHandler(view))
+		server.GET(pathname+"/", redirectHandler(pathname))
 	})
 
 	registerActionHandlers(server)

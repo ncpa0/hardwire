@@ -18,7 +18,7 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView) func(c echo.C
 			return c.NoContent(http.StatusNotFound)
 		}
 
-		routePathname := c.Request().Header.Get("HX-Dynamic-Fragment-Request")
+		routePathname := c.Request().Header.Get("Hardwire-Dynamic-Fragment-Request")
 		if routePathname == "" {
 			return c.String(http.StatusBadRequest, "Bad Request")
 		}
@@ -45,7 +45,7 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView) func(c echo.C
 			return utils.HandleError(c, err)
 		}
 
-		c.Response().Header().Set("Vary", "Hx-Current-Url, HX-Dynamic-Fragment-Request")
+		c.Response().Header().Set("Vary", "Hx-Current-Url, Hardwire-Dynamic-Fragment-Request, Accept-Language")
 
 		if !config.Current.Caching.Fragments.NoStore {
 			etag := utils.Hash(html)
