@@ -154,6 +154,18 @@ func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl st
 		return fmt.Errorf("error installing html builder package:\n%s %s", install.Stdout, install.Stderr)
 	}
 
+	installDev := utils.Execute(("bun"), []string{
+		"a",
+		"-D",
+		"@types/bun",
+	}, &utils.ExecuteOptions{
+		Wd: pagesDir,
+	})
+
+	if installDev.Err != nil {
+		return fmt.Errorf("error installing html builder package:\n%s %s", install.Stdout, install.Stderr)
+	}
+
 	builderInit := utils.Execute("bun", []string{
 		"x",
 		"hardwire-html-generator",

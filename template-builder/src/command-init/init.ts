@@ -1,25 +1,40 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { ftmpl } from "../utils/ftmpl";
 
-const BUNFIG_TEMPLATE = `jsx = "react-jsx"\njsxImportSource = "jsxte"\n`;
-const TSCONFIG_TEMPLATE = `{
-    "compilerOptions": {
-        "jsx": "react-jsx",
-        "jsxImportSource": "jsxte"
-    }
-}
+const BUNFIG_TEMPLATE = ftmpl`
+jsx = "react-jsx"\njsxImportSource = "jsxte"
 `;
-const CSS_TEMPLATE = `body { 
-    margin: unset;
-    min-height: 100vh;
-    min-width: 100vw;
-  }
-  
-  #root {
-    display: flex;
-    flex-direction: column;
-  }`;
-const INDEX_TEMPLATE = `import "hardwire-html-generator";
+const TSCONFIG_TEMPLATE = JSON.stringify(
+  {
+    compilerOptions: {
+      target: "ES2022",
+      module: "ES2022",
+      moduleResolution: "Node",
+      jsx: "react-jsx",
+      jsxImportSource: "jsxte",
+    },
+  },
+  null,
+  2
+);
+const CSS_TEMPLATE = ftmpl`
+* {
+  min-width: 0;
+}
+
+body { 
+  margin: unset;
+  min-height: 100vh;
+  min-width: 100vw;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}`;
+const INDEX_TEMPLATE = ftmpl`
+import "hardwire-html-generator";
         
 export default function App() {
   return (
@@ -38,7 +53,7 @@ export default function App() {
               <li><Link href="/">Home</Link></li>
             </ul>
           </nav>
-          <Switch>
+          <Switch id="main-switch">
             <StaticRoute path="home" title="Home Page">
               <h1>Hello World</h1>
             </StaticRoute>
