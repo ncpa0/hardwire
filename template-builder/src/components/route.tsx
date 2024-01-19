@@ -1,7 +1,7 @@
 import { ComponentApi } from "jsxte";
-import path from "node:path";
+import path from "node:path/posix";
 import { builderCtx, routerCtx } from "../contexts";
-import { pathCmp } from "../utils/paths";
+import { isSubpath } from "../utils/paths";
 import { StructProxy, structProxy } from "./gotmpl-generator/generate-go-templ";
 
 export const StaticRoute = (
@@ -13,13 +13,12 @@ export const StaticRoute = (
 ) => {
   const app = compApi.ctx.getOrFail(builderCtx);
   const router = compApi.ctx.getOrFail(routerCtx);
-  app.registerRoute(
-    path.join(...app.currentRoute, props.path),
-    props.title ?? "",
-    router.containerID
-  );
+  const thisRoute = path.join(...app.currentRoute, props.path);
+  app.registerRoute(thisRoute, props.title ?? "", router.containerID);
 
-  if (pathCmp(app.selectedRoute[0] ?? "", props.path)) {
+  const currentRoute =
+    app.selectedRoute.length > 0 ? path.join(...app.selectedRoute) : "";
+  if (isSubpath(currentRoute, thisRoute)) {
     return (
       <builderCtx.Provider
         value={{
@@ -54,13 +53,12 @@ export const DynamicRoute = <T extends object = Record<never, never>>(
 ) => {
   const app = compApi.ctx.getOrFail(builderCtx);
   const router = compApi.ctx.getOrFail(routerCtx);
-  app.registerRoute(
-    path.join(...app.currentRoute, props.path),
-    props.title ?? "",
-    router.containerID
-  );
+  const thisRoute = path.join(...app.currentRoute, props.path);
+  app.registerRoute(thisRoute, props.title ?? "", router.containerID);
 
-  if (pathCmp(app.selectedRoute[0] ?? "", props.path)) {
+  const currentRoute =
+    app.selectedRoute.length > 0 ? path.join(...app.selectedRoute) : "";
+  if (isSubpath(currentRoute, thisRoute)) {
     const [resourceKey, depth] = app.registerRouteDynamicResource(
       props.require
     );

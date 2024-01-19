@@ -26,19 +26,23 @@ type CachingConfig struct {
 }
 
 type Configuration struct {
-	// When enabled, the `.html` extension will be stripped from the URL pathnames.
-	StripExtension bool
+	// When enabled, the `.html` extension will be keeped in the URL pathnames
+	// (e.x. route `/home` will be hosted under `https://some.domain/home.html`).
+	KeepExtension bool
 	// When enabled, the server will print debug information to the console.
 	DebugMode bool
-	// The entrypoint file containing the JSX pages used to generate the views html files.
+	// The entrypoint file containing the JSX pages used to generate the views
+	// html files.
 	//
 	// Defaults to `index.tsx`.
 	Entrypoint string
-	// The directory to which output the generated html files, and from which those will be hosted.
+	// The directory to which output the generated html files, and from which
+	// those will be hosted.
 	//
 	// Defaults to `views`.
 	HtmlDir string
-	// The directory to which output the static files, and from which those will be hosted.
+	// The directory to which output the static files, and from which those
+	// will be hosted.
 	//
 	// Defaults to `static`.
 	StaticDir string
@@ -59,14 +63,14 @@ type Configuration struct {
 }
 
 var Current *Configuration = &Configuration{
-	StripExtension: false,
-	DebugMode:      false,
-	Entrypoint:     "index.tsx",
-	HtmlDir:        "views",
-	StaticDir:      "static",
-	StaticURL:      "/static",
-	NoBuild:        false,
-	CleanBuild:     false,
+	KeepExtension: false,
+	DebugMode:     false,
+	Entrypoint:    "index.tsx",
+	HtmlDir:       "views",
+	StaticDir:     "static",
+	StaticURL:     "/static",
+	NoBuild:       false,
+	CleanBuild:    false,
 	Caching: &CachingConfig{
 		StaticRoutes: &CachingPolicy{
 			MaxAge: int(time.Hour.Seconds()),
@@ -81,7 +85,7 @@ var Current *Configuration = &Configuration{
 }
 
 func Configure(newConfig *Configuration) {
-	Current.StripExtension = newConfig.StripExtension
+	Current.KeepExtension = newConfig.KeepExtension
 	Current.DebugMode = newConfig.DebugMode
 
 	if newConfig.Entrypoint != "" {

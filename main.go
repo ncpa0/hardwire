@@ -40,7 +40,8 @@ func validateResourcesAvailable(resource []string) error {
 	return nil
 }
 
-func Start(server *echo.Echo, port string) error {
+// Builds the HTML and templates for all pages and adds the routes to the server
+func Start(server *echo.Echo) error {
 	pageViewRegistry := views.GetPageViewRegistry()
 	dynamicFragmentViewRegistry := views.GetDynamicFragmentViewRegistry()
 
@@ -114,5 +115,5 @@ func Start(server *echo.Echo, port string) error {
 		BeforeSend: config.Current.BeforeStaticSend,
 	})
 
-	return server.Start(port)
+	return nil
 }

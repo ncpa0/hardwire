@@ -1,7 +1,7 @@
 import { renderToHtmlAsync } from "jsxte";
 import { builderCtx } from "./contexts";
 import { capitalize } from "./utils/capitalize";
-import { pathCmp } from "./utils/paths";
+import { pathCompare } from "./utils/paths";
 
 type RouteDefinition = {
   path: string;
@@ -18,7 +18,7 @@ class RouteCollection {
   }
 
   public get(path: string): RouteDefinition | undefined {
-    return this.routes.find((r) => pathCmp(r.path, path));
+    return this.routes.find((r) => pathCompare(r.path, path));
   }
 
   public getAll(): Array<RouteDefinition> {
@@ -26,7 +26,7 @@ class RouteCollection {
   }
 
   public has(path: string): boolean {
-    return this.routes.some((r) => pathCmp(r.path, path));
+    return this.routes.some((r) => pathCompare(r.path, path));
   }
 
   public concatInto(collection: RouteCollection) {

@@ -99,7 +99,7 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 	if !path.IsAbs(routePathname) {
 		routePathname = "/" + routePathname
 	}
-	if configuration.Current.StripExtension {
+	if !configuration.Current.KeepExtension {
 		routePathname = routePathname[:len(routePathname)-len(path.Ext(routePathname))]
 	}
 

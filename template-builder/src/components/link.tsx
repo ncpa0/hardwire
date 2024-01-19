@@ -1,7 +1,7 @@
 import { ComponentApi } from "jsxte";
 import path from "node:path";
 import { builderCtx } from "../contexts";
-import { pathIsWithin } from "../utils/paths";
+import { isSubpath } from "../utils/paths";
 import { LocaleContext } from "./localizations";
 
 export const Link = (
@@ -37,7 +37,7 @@ export const Link = (
   }
 
   while (true) {
-    if (pathIsWithin(currentPathname, base)) {
+    if (isSubpath(base, currentPathname)) {
       const target = app.getRouteContainerId(path.join(base, name));
       return (
         <a
