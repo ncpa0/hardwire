@@ -1,12 +1,13 @@
 import { ComponentApi } from "jsxte";
 import path from "node:path/posix";
 import { builderCtx, routerCtx } from "../contexts";
-import { isSubpath } from "../utils/paths";
+import { isSubpath, pathCompare } from "../utils/paths";
 import { StructProxy, structProxy } from "./gotmpl-generator/generate-go-templ";
 
 export const StaticRoute = (
   props: JSXTE.PropsWithChildren<{
     path: string;
+    exact?: true;
     title?: string;
   }>,
   compApi: ComponentApi
@@ -18,13 +19,20 @@ export const StaticRoute = (
 
   const currentRoute =
     app.selectedRoute.length > 0 ? path.join(...app.selectedRoute) : "";
+
+  if (props.exact) {
+    if (!pathCompare(thisRoute, currentRoute)) {
+      return <></>;
+    }
+  }
+
   if (isSubpath(currentRoute, thisRoute)) {
     return (
       <builderCtx.Provider
         value={{
           currentRoute: app.currentRoute.concat(props.path),
           currentRouteTitle: app.currentRouteTitle,
-          selectedRoute: app.selectedRoute.slice(1),
+          selectedRoute: app.selectedRoute,
           entrypointDir: app.entrypointDir,
           isBuildPhase: app.isBuildPhase,
           getRouteContainerId: app.getRouteContainerId,
@@ -46,6 +54,7 @@ export const DynamicRoute = <T extends object = Record<never, never>>(
   props: {
     path: string;
     require: string;
+    exact?: boolean;
     title?: string;
     render: (data: StructProxy<T>) => JSX.Element;
   },
@@ -58,6 +67,13 @@ export const DynamicRoute = <T extends object = Record<never, never>>(
 
   const currentRoute =
     app.selectedRoute.length > 0 ? path.join(...app.selectedRoute) : "";
+
+  if (props.exact) {
+    if (!pathCompare(thisRoute, currentRoute)) {
+      return <></>;
+    }
+  }
+
   if (isSubpath(currentRoute, thisRoute)) {
     const [resourceKey, depth] = app.registerRouteDynamicResource(
       props.require
@@ -67,7 +83,7 @@ export const DynamicRoute = <T extends object = Record<never, never>>(
         value={{
           currentRoute: app.currentRoute.concat(props.path),
           currentRouteTitle: app.currentRouteTitle,
-          selectedRoute: app.selectedRoute.slice(1),
+          selectedRoute: app.selectedRoute,
           entrypointDir: app.entrypointDir,
           isBuildPhase: app.isBuildPhase,
           getRouteContainerId: app.getRouteContainerId,
