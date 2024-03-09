@@ -39,7 +39,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   }
 
   const name =
-    props.package ?? props.path ? path.basename(props.path!) : undefined;
+    props.package ?? (props.path ? path.basename(props.path!) : undefined);
 
   if (name != null && !props.inline) {
     const preBuilt = extFiles.get(name);
@@ -85,7 +85,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
 
   const src = extFiles.register(
     contents,
-    props.package ?? props.path ? path.basename(props.path!) : "inline",
+    props.package ?? (props.path ? path.basename(props.path!) : "inline"),
     "css"
   );
 
