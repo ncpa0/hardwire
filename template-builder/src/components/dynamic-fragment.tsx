@@ -18,7 +18,7 @@ export type DynamicFragmentProps<T extends object> = {
   render: (data: StructProxy<T>) => JSX.Element;
   class?: string;
   fallback?: JSX.Element;
-  trigger?: "load" | "revealed";
+  trigger?: "load" | "revealed" | "intersect";
   swap?: `${number}s` | `${number}ms`;
   settle?: `${number}s` | `${number}ms`;
   /**
@@ -41,8 +41,18 @@ export const DynamicFragment = async <T extends object = Record<never, never>>(
 
   const url = bldr.registerDynamicFragment(props.require, templ);
 
-  const hxtrigger =
-    props.trigger === "load" ? "load delay:20ms" : "revealed delay:20ms";
+  let hxtrigger = "revealed";
+  switch (props.trigger) {
+    case "load":
+      hxtrigger = "load delay:20ms";
+      break;
+    case "revealed":
+      hxtrigger = "revealed delay:20ms";
+      break;
+    case "intersect":
+      hxtrigger = "intersect delay:20ms";
+      break;
+  }
 
   let hxswap = "outerHTML";
 
