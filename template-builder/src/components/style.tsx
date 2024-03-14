@@ -1,34 +1,60 @@
 import { CompressOptions, MinifyOptions, minify as cssMinify } from "csso";
+import esbuild from "esbuild";
 import type { ComponentApi } from "jsxte";
 import path from "node:path";
 import { builderCtx } from "../contexts";
 
-export type StyleProps =
-  | {
-      children?: never;
-      package?: never;
-      path: string;
-      dirname: string;
-      inline?: boolean;
-      embed?: never;
-    }
-  | {
-      path?: never;
-      children?: never;
-      package: string;
-      inline?: boolean;
-      embed?: never;
-    }
-  | {
-      path?: never;
-      package?: never;
-      children?: JSXTE.TextNodeElement | JSXTE.TextNodeElement[];
-      inline?: boolean;
-      /**
-       * When enabled the contents of this tag will be used.
-       */
-      embed: true;
-    };
+const IS_PROD = process.env.NODE_ENV !== "development";
+
+export type BaseStyleProps = {
+  linkAttrs?: JSX.IntrinsicElements["link"];
+  styleAttrs?: JSX.IntrinsicElements["style"];
+};
+
+export type StyleProps = BaseStyleProps &
+  (
+    | {
+        children?: never;
+        package?: never;
+        path: string;
+        dirname: string;
+        inline?: boolean;
+        embed?: never;
+      }
+    | {
+        path?: never;
+        children?: never;
+        package: string;
+        inline?: boolean;
+        embed?: never;
+      }
+    | {
+        path?: never;
+        package?: never;
+        children?: JSXTE.TextNodeElement | JSXTE.TextNodeElement[];
+        inline?: boolean;
+        /**
+         * When enabled the contents of this tag will be used.
+         */
+        embed: true;
+      }
+  );
+
+const bundleCss = async (filepath: string) => {
+  const result = await esbuild.build({
+    entryPoints: [filepath],
+    bundle: true,
+    write: false,
+    minify: IS_PROD,
+    platform: "browser",
+    supported: {
+      nesting: false,
+    },
+    sourcemap: IS_PROD ? undefined : "inline",
+  });
+  if (result.errors.length > 0) throw new Error(result.errors[0].text);
+  return result.outputFiles[0].text;
+};
 
 export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
@@ -46,7 +72,13 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
 
     if (preBuilt != null) {
       return (
-        <link rel="stylesheet" href={preBuilt} type="text/css" media="screen" />
+        <link
+          rel="stylesheet"
+          href={preBuilt}
+          type="text/css"
+          media="screen"
+          {...(props.linkAttrs ?? {})}
+        />
       );
     }
   }
@@ -57,11 +89,12 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
 
   if (props.path) {
     filepath = path.join(props.dirname, props.path);
-    stylesheet = await Bun.file(filepath).text();
+    stylesheet = await bundleCss(filepath);
   } else if (props.package) {
     filepath = props.package!;
     const modulePath = await Bun.resolve(props.package!, builder.entrypointDir);
-    stylesheet = await Bun.file(modulePath).text();
+    // stylesheet = await Bun.file(modulePath).text();
+    stylesheet = await bundleCss(modulePath);
   } else if (props.embed) {
     stylesheet = Array.isArray(props.children!)
       ? props.children!.map((n) => n.text).join("\n")
@@ -80,7 +113,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   }
 
   if (props.inline) {
-    return <style>{contents}</style>;
+    return <style {...(props.styleAttrs ?? {})}>{contents}</style>;
   }
 
   const src = extFiles.register(
@@ -89,5 +122,13 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
     "css"
   );
 
-  return <link rel="stylesheet" href={src} type="text/css" media="screen" />;
+  return (
+    <link
+      rel="stylesheet"
+      href={src}
+      type="text/css"
+      media="screen"
+      {...(props.linkAttrs ?? {})}
+    />
+  );
 };
