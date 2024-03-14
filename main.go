@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/labstack/echo"
+	echo "github.com/labstack/echo/v4"
 	config "github.com/ncpa0/hardwire/configuration"
 	resources "github.com/ncpa0/hardwire/resource-provider"
 	servestatic "github.com/ncpa0/hardwire/serve-static"

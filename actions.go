@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/labstack/echo"
+	echo "github.com/labstack/echo/v4"
 	"github.com/ncpa0/hardwire/utils"
 	"github.com/ncpa0/hardwire/views"
 	. "github.com/ncpa0cpl/convenient-structures"

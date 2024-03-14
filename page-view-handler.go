@@ -3,7 +3,7 @@ package hardwire
 import (
 	"net/http"
 
-	"github.com/labstack/echo"
+	echo "github.com/labstack/echo/v4"
 	config "github.com/ncpa0/hardwire/configuration"
 	"github.com/ncpa0/hardwire/utils"
 	"github.com/ncpa0/hardwire/views"

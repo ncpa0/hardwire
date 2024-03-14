@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/labstack/echo"
+	echo "github.com/labstack/echo/v4"
 	"github.com/ncpa0/hardwire/utils"
 	. "github.com/ncpa0cpl/convenient-structures"
 )

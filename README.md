@@ -9,7 +9,7 @@ go get github.com/ncpa0/hardwire
 ```go
 import (
     "github.com/ncpa0/hardwire"
-    "github.com/labstack/echo"
+    echo "github.com/labstack/echo/v4"
 )
 
 func main() {

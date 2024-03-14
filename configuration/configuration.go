@@ -3,7 +3,7 @@ package configuration
 import (
 	"time"
 
-	"github.com/labstack/echo"
+	echo "github.com/labstack/echo/v4"
 	servestatic "github.com/ncpa0/hardwire/serve-static"
 )
 
