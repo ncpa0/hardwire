@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	echo "github.com/labstack/echo/v4"
@@ -26,19 +27,26 @@ var staticFiles *Array[*StaticFile] = &Array[*StaticFile]{}
 
 func detectContentType(filepath string, content []byte) string {
 	httpDet := http.DetectContentType(content)
+	ext := path.Ext(filepath)
 
-	if httpDet == "text/plain" {
-		switch path.Ext(filepath) {
+	if ext == ".svg" {
+		return "image/svg+xml; charset=utf-8"
+	}
+
+	if strings.HasPrefix(httpDet, "text/plain") {
+		switch ext {
 		case ".html":
-			return "text/html"
+			return strings.Replace(httpDet, "text/plain", "text/html", 1)
 		case ".css":
-			return "text/css"
-		case ".js":
-			return "text/javascript"
+			return strings.Replace(httpDet, "text/plain", "text/css", 1)
+		case ".js", ".mjs", ".cjs":
+			return strings.Replace(httpDet, "text/plain", "text/javascript", 1)
+		case ".ts", ".mts", ".cts":
+			return strings.Replace(httpDet, "text/plain", "text/typescript", 1)
 		case ".json":
-			return "application/json"
+			return strings.Replace(httpDet, "text/plain", "application/json", 1)
 		case ".xml":
-			return "application/xml"
+			return strings.Replace(httpDet, "text/plain", "application/xml", 1)
 		}
 	}
 
