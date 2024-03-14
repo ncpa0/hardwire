@@ -32,10 +32,17 @@ func createResponse(c echo.Context, view View) error {
 	return c.HTML(http.StatusOK, renderResult.Html)
 }
 
-func createPageViewHandler(view *views.PageView) func(c echo.Context) error {
+func createPageViewHandler(view *views.PageView, conf *config.Configuration) func(c echo.Context) error {
 	if view.Metadata.ShouldRedirect {
 		return func(c echo.Context) error {
-			return c.Redirect(http.StatusMovedPermanently, view.Metadata.RedirectURL)
+			err := c.Redirect(http.StatusMovedPermanently, view.Metadata.RedirectURL)
+			if err != nil {
+				return err
+			}
+			if conf.BeforeResponse != nil {
+				return conf.BeforeResponse(c)
+			}
+			return nil
 		}
 	}
 
@@ -59,10 +66,24 @@ func createPageViewHandler(view *views.PageView) func(c echo.Context) error {
 			child := view.QuerySelector("#" + selector)
 
 			if !child.IsNil() {
-				return createResponse(c, child.Get())
+				err := createResponse(c, child.Get())
+				if err != nil {
+					return err
+				}
+				if conf.BeforeResponse != nil {
+					return conf.BeforeResponse(c)
+				}
+				return nil
 			}
 		}
 
-		return createResponse(c, view)
+		err := createResponse(c, view)
+		if err != nil {
+			return err
+		}
+		if conf.BeforeResponse != nil {
+			return conf.BeforeResponse(c)
+		}
+		return nil
 	}
 }

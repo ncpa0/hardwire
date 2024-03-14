@@ -1,9 +1,10 @@
 import { renderToHtmlAsync } from "jsxte";
 import path from "node:path";
-import prettier from "prettier";
 import { collectRoutes } from "./collect-routes";
 import { RouteMetaContext, builderCtx } from "./contexts";
 import { capitalize } from "./utils/capitalize";
+
+const PRETTY_HTML = process.env.PRETTY_HTML;
 
 const noop = () => {};
 
@@ -153,7 +154,12 @@ export const buildPages = async (
       </RouteMetaContext.Provider>
     );
 
-    page.html = await prettier.format(html, { parser: "html" });
+    if (PRETTY_HTML) {
+      const prettier = await import("prettier");
+      page.html = await prettier.format(html, { parser: "html" });
+    } else {
+      page.html = html;
+    }
 
     if (requiredResources.length > 0) {
       page.dynamic = {

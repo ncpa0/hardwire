@@ -66,7 +66,7 @@ func Start(server *echo.Echo) error {
 		}
 
 		pathname := view.GetRoutePathname()
-		server.GET(pathname, createPageViewHandler(view))
+		server.GET(pathname, createPageViewHandler(view, config.Current))
 		server.GET(pathname+"/", redirectHandler(pathname))
 
 		return nil
@@ -87,7 +87,7 @@ func Start(server *echo.Echo) error {
 		}
 
 		pathname := view.GetRoutePathname()
-		server.GET(pathname, createDynamicFragmentHandler(view))
+		server.GET(pathname, createDynamicFragmentHandler(view, config.Current))
 		server.GET(pathname+"/", redirectHandler(pathname))
 
 		return nil
@@ -112,7 +112,7 @@ func Start(server *echo.Echo) error {
 	}
 
 	servestatic.Serve(server, config.Current.StaticURL, staticDir, &servestatic.Configuration{
-		BeforeSend: config.Current.BeforeStaticSend,
+		BeforeSend: config.Current.BeforeStaticResponse,
 	})
 
 	return nil

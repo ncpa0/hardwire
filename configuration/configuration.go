@@ -57,20 +57,23 @@ type Configuration struct {
 	// Clean the html directory before generating the html files.
 	//
 	// Defaults to `false`.
-	CleanBuild       bool
-	Caching          *CachingConfig
-	BeforeStaticSend func(resp *servestatic.StaticResponse, c echo.Context) error
+	CleanBuild           bool
+	Caching              *CachingConfig
+	BeforeStaticResponse func(resp *servestatic.StaticResponse, c echo.Context) error
+	BeforeResponse       func(c echo.Context) error
 }
 
 var Current *Configuration = &Configuration{
-	KeepExtension: false,
-	DebugMode:     false,
-	Entrypoint:    "index.tsx",
-	HtmlDir:       "views",
-	StaticDir:     "static",
-	StaticURL:     "/static",
-	NoBuild:       false,
-	CleanBuild:    false,
+	KeepExtension:        false,
+	DebugMode:            false,
+	Entrypoint:           "index.tsx",
+	HtmlDir:              "views",
+	StaticDir:            "static",
+	StaticURL:            "/static",
+	NoBuild:              false,
+	CleanBuild:           false,
+	BeforeStaticResponse: nil,
+	BeforeResponse:       nil,
 	Caching: &CachingConfig{
 		StaticRoutes: &CachingPolicy{
 			MaxAge: int(time.Hour.Seconds()),
@@ -100,8 +103,11 @@ func Configure(newConfig *Configuration) {
 	if newConfig.StaticURL != "" {
 		Current.StaticURL = newConfig.StaticURL
 	}
-	if newConfig.BeforeStaticSend != nil {
-		Current.BeforeStaticSend = newConfig.BeforeStaticSend
+	if newConfig.BeforeStaticResponse != nil {
+		Current.BeforeStaticResponse = newConfig.BeforeStaticResponse
+	}
+	if newConfig.BeforeResponse != nil {
+		Current.BeforeResponse = newConfig.BeforeResponse
 	}
 	if newConfig.NoBuild {
 		Current.NoBuild = true

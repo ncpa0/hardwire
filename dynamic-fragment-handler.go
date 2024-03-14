@@ -10,17 +10,31 @@ import (
 	"github.com/ncpa0/hardwire/views"
 )
 
-func createDynamicFragmentHandler(view *views.DynamicFragmentView) func(c echo.Context) error {
+func createDynamicFragmentHandler(view *views.DynamicFragmentView, conf *config.Configuration) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		provider := resources.Provider.Find(view.GetResourceName())
 
 		if provider.IsNil() {
-			return c.NoContent(http.StatusNotFound)
+			err := c.NoContent(http.StatusNotFound)
+			if err != nil {
+				return err
+			}
+			if conf.BeforeResponse != nil {
+				return conf.BeforeResponse(c)
+			}
+			return nil
 		}
 
 		routePathname := c.Request().Header.Get("Hardwire-Dynamic-Fragment-Request")
 		if routePathname == "" {
-			return c.String(http.StatusBadRequest, "Bad Request")
+			err := c.String(http.StatusBadRequest, "Bad Request")
+			if err != nil {
+				return err
+			}
+			if conf.BeforeResponse != nil {
+				return conf.BeforeResponse(c)
+			}
+			return nil
 		}
 
 		hxCurrentUrl := c.Request().Header.Get("Hx-Current-Url")
@@ -34,15 +48,36 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView) func(c echo.C
 
 		resource, err := provider.Get().Handle(requestContext)
 		if err != nil {
-			return utils.HandleError(c, err)
+			err := utils.HandleError(c, err)
+			if err != nil {
+				return err
+			}
+			if conf.BeforeResponse != nil {
+				return conf.BeforeResponse(c)
+			}
+			return nil
 		}
 		if resource == nil {
-			return c.String(http.StatusNotFound, "Not found")
+			err := c.String(http.StatusNotFound, "Not found")
+			if err != nil {
+				return err
+			}
+			if conf.BeforeResponse != nil {
+				return conf.BeforeResponse(c)
+			}
+			return nil
 		}
 
 		html, err := view.Build(resource)
 		if err != nil {
-			return utils.HandleError(c, err)
+			err := utils.HandleError(c, err)
+			if err != nil {
+				return err
+			}
+			if conf.BeforeResponse != nil {
+				return conf.BeforeResponse(c)
+			}
+			return nil
 		}
 
 		c.Response().Header().Set("Vary", "Hx-Current-Url, Hardwire-Dynamic-Fragment-Request, Accept-Language")
@@ -51,7 +86,14 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView) func(c echo.C
 			etag := utils.Hash(html)
 			ifNoneMatch := c.Request().Header.Get("If-None-Match")
 			if ifNoneMatch == etag {
-				return c.NoContent(http.StatusNotModified)
+				err := c.NoContent(http.StatusNotModified)
+				if err != nil {
+					return err
+				}
+				if conf.BeforeResponse != nil {
+					return conf.BeforeResponse(c)
+				}
+				return nil
 			}
 
 			c.Response().Header().Set("ETag", etag)
@@ -62,6 +104,13 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView) func(c echo.C
 			config.GenerateCacheHeaderForFragments(),
 		)
 		c.Response().Header().Set("Content-Type", "text/html")
-		return c.String(http.StatusOK, html)
+		err = c.String(http.StatusOK, html)
+		if err != nil {
+			return err
+		}
+		if conf.BeforeResponse != nil {
+			return conf.BeforeResponse(c)
+		}
+		return nil
 	}
 }
