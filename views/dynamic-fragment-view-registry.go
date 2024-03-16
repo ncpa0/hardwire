@@ -19,6 +19,18 @@ func (vr *DynamicFragmentViewRegistry) Register(view *DynamicFragmentView) {
 	vr.views.Push(view)
 }
 
+func (vr *DynamicFragmentViewRegistry) GetFragmentById(id string) *utils.Option[DynamicFragmentView] {
+	viewsIterator := vr.views.Iterator()
+	for !viewsIterator.Done() {
+		view, _ := viewsIterator.Next()
+		if view.id == id {
+			return utils.NewOption(view)
+		}
+	}
+
+	return utils.Empty[DynamicFragmentView]()
+}
+
 func (vr *DynamicFragmentViewRegistry) GetFragment(routePathname string) *utils.Option[DynamicFragmentView] {
 	viewsIterator := vr.views.Iterator()
 	for !viewsIterator.Done() {

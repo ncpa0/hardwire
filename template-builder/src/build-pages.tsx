@@ -1,7 +1,7 @@
-import { renderToHtmlAsync } from "jsxte";
 import path from "node:path";
 import { collectRoutes } from "./collect-routes";
 import { RouteMetaContext, builderCtx } from "./contexts";
+import { render } from "./renderer";
 import { capitalize } from "./utils/capitalize";
 
 const PRETTY_HTML = process.env.PRETTY_HTML;
@@ -94,7 +94,7 @@ export const buildPages = async (
       hash: hashedName,
       contents,
     });
-    return `/__dyn/${hashedName}`;
+    return { url: `/__dyn/${hashedName}`, id: hashedName };
   };
 
   const getExternalFileUrl = (name: string) => {
@@ -129,7 +129,7 @@ export const buildPages = async (
       page.metadata[key] = value;
     };
 
-    const html = await renderToHtmlAsync(
+    const html = await render(
       <RouteMetaContext.Provider value={{ addMetadata }}>
         <ExtFilesCtx.Provider
           value={{ register: registerExternalFile, get: getExternalFileUrl }}

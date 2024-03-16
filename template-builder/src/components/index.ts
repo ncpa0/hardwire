@@ -3,6 +3,7 @@ import { createFormAction } from "./form-action";
 import { If } from "./gotmpl-generator/if";
 import { MapArray } from "./gotmpl-generator/range";
 import { Head } from "./head";
+import { $island } from "./island";
 import { Link } from "./link";
 import {
   Locale,
@@ -34,6 +35,7 @@ export const GLOBALS = {
   Localizations,
   Translate,
   useTranslation,
+  $island,
 };
 
 export const registerGlobalFunctions = () => {
@@ -71,5 +73,6 @@ declare global {
   const Localizations: typeof GLOBALS.Localizations;
   const Translate: typeof GLOBALS.Translate;
   const useTranslation: typeof GLOBALS.useTranslation;
+  const $island: typeof GLOBALS.$island;
   type TFunction = TF;
 }

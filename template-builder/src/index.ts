@@ -1,9 +1,18 @@
 #!/usr/bin/env bun
 
+/// <reference types="bun-types" />
 import path from "node:path";
 import { Argv } from "./argv";
 import { buildCmd } from "./command-build/build";
 import { initCmd } from "./command-init/init";
+
+declare global {
+  namespace JSXTE {
+    interface AttributeAcceptedTypes {
+      ALL: ValueProxy<any>;
+    }
+  }
+}
 
 async function main() {
   const argv = new Argv("hardwire-html-generator");

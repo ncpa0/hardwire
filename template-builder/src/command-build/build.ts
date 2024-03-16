@@ -1,6 +1,7 @@
 import { createElement } from "jsxte";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { IslandMap } from "../components/island";
 
 type PageMetadata = {
   isDynamic: boolean;
@@ -41,6 +42,14 @@ export async function buildCmd(
   );
 
   console.log("Saving results to filesystem...");
+
+  await fs.mkdir(outDir, { recursive: true });
+  await Promise.all([
+    fs.mkdir(staticDir, { recursive: true }),
+    fs.mkdir(path.join(outDir, "__dyn"), { recursive: true }),
+    fs.mkdir(path.join(outDir, "__islands"), { recursive: true }),
+  ]);
+
   await Promise.all([
     ...pages.map(async (page) => {
       const outfilePath = path.join(outDir, page.route) + ".html";
@@ -72,11 +81,13 @@ export async function buildCmd(
         path.join(outDir, "__dyn", frag.hash) + ".template.html";
       const metaFile = path.join(outDir, "__dyn", frag.hash) + ".meta.json";
 
-      const basedir = path.dirname(outfilePath);
-      await fs.mkdir(basedir, { recursive: true });
-
       await Bun.write(outfilePath, frag.contents);
       await Bun.write(metaFile, JSON.stringify(meta));
+    }),
+    ...Array.from(IslandMap.entries()).map((entry) => {
+      const [, { id, fragmentID }] = entry;
+      const outfilePath = path.join(outDir, "__islands", id) + ".meta.json";
+      return Bun.write(outfilePath, JSON.stringify({ id, fragmentID }));
     }),
   ]);
 

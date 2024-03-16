@@ -2,18 +2,19 @@ package views
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 	"text/template"
 
-	"github.com/antchfx/htmlquery"
+	"github.com/antchfx/xmlquery"
 	echo "github.com/labstack/echo/v4"
 	"github.com/ncpa0/hardwire/configuration"
 	resources "github.com/ncpa0/hardwire/resource-provider"
 	"github.com/ncpa0/hardwire/utils"
 	. "github.com/ncpa0cpl/convenient-structures"
-	"golang.org/x/net/html"
 )
 
 type PageView struct {
@@ -31,7 +32,7 @@ type PageView struct {
 
 type NodeProxy struct {
 	parentRoot *PageView
-	node       *html.Node
+	node       *xmlquery.Node
 	raw        string
 	etag       string
 
@@ -39,36 +40,49 @@ type NodeProxy struct {
 	template *template.Template
 }
 
-func nodeToString(node *html.Node) (string, error) {
-	var b bytes.Buffer
-	err := html.Render(&b, node)
-	if err != nil {
-		return "", err
+const PREFIX_LEN = len("<?xml version=\"1.0\"?>")
+const TEMPL_QUOTE = "@#34T;"
+
+func nodeToString(node *xmlquery.Node) string {
+	s := node.OutputXMLWithOptions(
+		xmlquery.WithOutputSelf(),
+		xmlquery.WithPreserveSpace(),
+	)
+	if strings.HasPrefix(s, "<?xml") {
+		s = s[PREFIX_LEN:]
 	}
-	return b.String(), nil
+	s = strings.ReplaceAll(s, TEMPL_QUOTE, "\"")
+	return s
 }
 
-func addClass(node *html.Node, class string) {
-	var currentClassAttribute *html.Attribute
+func addClass(node *xmlquery.Node, class string) {
+	var currentClassAttribute *xmlquery.Attr
 	for i, attr := range node.Attr {
-		if attr.Key == "class" {
+		if attr.Name.Local == "class" {
 			currentClassAttribute = &node.Attr[i]
 			break
 		}
 	}
 
 	if currentClassAttribute == nil {
-		node.Attr = append(node.Attr, html.Attribute{
-			Key: "class",
-			Val: class,
+		node.Attr = append(node.Attr, xmlquery.Attr{
+			Name: xml.Name{
+				Local: "class",
+			},
+			Value: class,
 		})
 	} else {
-		currentClassAttribute.Val += " " + class
+		currentClassAttribute.Value += " " + class
 	}
 }
 
 func NewPageView(root string, filepath string) (*PageView, error) {
-	doc, err := htmlquery.LoadDoc(path.Join(root, filepath))
+	file, err := os.Open(path.Join(root, filepath))
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	doc, err := xmlquery.Parse(file)
 
 	if err != nil {
 		return nil, err
@@ -86,12 +100,9 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 	var rawHtml string
 	var title string
 	var routePathname string = filepath
-	rawHtml, err = nodeToString(doc)
-	if err != nil {
-		return nil, err
-	}
+	rawHtml = nodeToString(doc)
 
-	titleNode := htmlquery.FindOne(doc, "//title")
+	titleNode := xmlquery.FindOne(doc, "//title")
 	if titleNode != nil && titleNode.FirstChild != nil {
 		title = titleNode.FirstChild.Data
 	}
@@ -195,15 +206,13 @@ func (v *PageView) QuerySelector(selector string) *utils.Option[NodeProxy] {
 	}
 
 	query := utils.NewTranslator(selector).XPathQuery()
-	result := htmlquery.FindOne(v.document.node, query)
+	result := xmlquery.FindOne(v.document.node, query)
 
 	if result == nil {
 		return utils.Empty[NodeProxy]()
 	}
 
-	var b bytes.Buffer
-	html.Render(&b, result)
-	rawHtml := b.String()
+	rawHtml := nodeToString(result)
 
 	var templ *template.Template
 	if v.isDynamic {
@@ -230,13 +239,11 @@ func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 	}
 
 	query := utils.NewTranslator(selector).XPathQuery()
-	nodeList := htmlquery.Find(v.document.node, query)
+	nodeList := xmlquery.Find(v.document.node, query)
 
 	result := make([]*NodeProxy, len(nodeList))
 	for _, node := range nodeList {
-		var b bytes.Buffer
-		html.Render(&b, node)
-		rawHtml := b.String()
+		rawHtml := nodeToString(node)
 
 		var templ *template.Template
 		if v.isDynamic {

@@ -9,6 +9,7 @@ import (
 	config "github.com/ncpa0/hardwire/configuration"
 	templatebuilder "github.com/ncpa0/hardwire/template-builder"
 	"github.com/ncpa0/hardwire/utils"
+	. "github.com/ncpa0cpl/convenient-structures"
 )
 
 func IsTemplate(filepath string) bool {
@@ -93,6 +94,13 @@ func LoadViews(wd string) error {
 		return err
 	}
 
+	err = loadIslands(htmlDir)
+
+	if err != nil {
+		fmt.Println("Error loading island views.")
+		return err
+	}
+
 	return nil
 }
 
@@ -102,4 +110,8 @@ func GetPageViewRegistry() *PageViewRegistry {
 
 func GetDynamicFragmentViewRegistry() *DynamicFragmentViewRegistry {
 	return dynamicFragmentViewRegistry
+}
+
+func GetIslands() *Array[*Island] {
+	return islandsList
 }

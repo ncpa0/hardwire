@@ -1,6 +1,7 @@
 package hardwire
 
 import (
+	"errors"
 	"net/http"
 
 	echo "github.com/labstack/echo/v4"
@@ -80,7 +81,10 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView, conf *config.
 			return nil
 		}
 
-		c.Response().Header().Set("Vary", "Hx-Current-Url, Hardwire-Dynamic-Fragment-Request, Accept-Language")
+		c.Response().Header().Set(
+			"Vary",
+			"Hx-Current-Url, Hardwire-Dynamic-Fragment-Request, Accept-Language",
+		)
 
 		if !config.Current.Caching.Fragments.NoStore {
 			etag := utils.Hash(html)
@@ -113,4 +117,41 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView, conf *config.
 		}
 		return nil
 	}
+}
+
+func buildFragment(fragment *views.DynamicFragmentView, c echo.Context) (string, error) {
+	provider := resources.Provider.Find(fragment.GetResourceName())
+
+	if provider.IsNil() {
+		return "", errors.New("resource not found")
+	}
+
+	routePathname := c.Request().Header.Get("Hardwire-Dynamic-Fragment-Request")
+	if routePathname == "" {
+		return "", errors.New("bad request")
+	}
+
+	hxCurrentUrl := c.Request().Header.Get("Hx-Current-Url")
+	params := utils.ParseUrlParams(routePathname, hxCurrentUrl)
+
+	requestContext := resources.NewDynamicRequestContext(
+		c,
+		params,
+		routePathname,
+	)
+
+	resource, err := provider.Get().Handle(requestContext)
+	if err != nil {
+		return "", err
+	}
+	if resource == nil {
+		return "", errors.New("resource not found")
+	}
+
+	html, err := fragment.Build(resource)
+	if err != nil {
+		return "", err
+	}
+
+	return html, nil
 }

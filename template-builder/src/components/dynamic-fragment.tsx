@@ -1,6 +1,7 @@
 import { ComponentApi } from "jsxte";
 import { builderCtx } from "../contexts";
-import { StructProxy, structProxy } from "./gotmpl-generator/generate-go-templ";
+import { render } from "../renderer";
+import { structProxy } from "./gotmpl-generator/generate-go-templ";
 
 declare global {
   namespace JSX {
@@ -13,9 +14,9 @@ declare global {
   }
 }
 
-export type DynamicFragmentProps<T extends object> = {
+export type DynamicFragmentProps<T> = {
   require: string;
-  render: (data: StructProxy<T>) => JSX.Element;
+  render: (data: AsProxy<T>) => JSX.Element;
   class?: string;
   fallback?: JSX.Element;
   trigger?: "load" | "revealed" | "intersect";
@@ -27,19 +28,24 @@ export type DynamicFragmentProps<T extends object> = {
   locale?: string;
 };
 
-export const DynamicFragment = async <T extends object = Record<never, never>>(
+export const DynamicFragment = async <T,>(
   props: DynamicFragmentProps<T>,
   compApi: ComponentApi
 ) => {
   const bldr = compApi.ctx.getOrFail(builderCtx);
-  const templ = await compApi.renderAsync(
+  const templ = await render(
     <dynamic-fragment class={props.class}>
       {`{{$frag_root := .}}`}
       {props.render(structProxy("$frag_root"))}
-    </dynamic-fragment>
+    </dynamic-fragment>,
+    compApi
   );
 
-  const url = bldr.registerDynamicFragment(props.require, templ);
+  const { url, id } = bldr.registerDynamicFragment(props.require, templ);
+
+  if ("__fragidgetter" in props) {
+    (props as any).__fragidgetter(id);
+  }
 
   let hxtrigger = "revealed";
   switch (props.trigger) {

@@ -1,28 +1,34 @@
-import { ComponentApi } from "jsxte";
-import {
-  StructProxy,
-  ValueProxy,
-  structProxy,
-  valueProxy,
-} from "./generate-go-templ";
+import { ComponentApi, defineContext } from "jsxte";
+import { render } from "../../renderer";
+import { structProxy, valueProxy } from "./generate-go-templ";
 
-type MapProps<Data extends StructProxy<any[]>> = {
-  data: Data;
-  render: (data: Data[number], key: ValueProxy<string>) => JSX.Element;
+type MapProps<T> = {
+  data: ListProxy<T>;
+  render: (data: AsProxy<T>, key: ValueProxy<string>) => JSX.Element;
 };
 
-const randName = () => {
-  return `$_${Math.random().toString(36).slice(2)}`;
+const MapArrayArgNameContext = defineContext<{
+  i: number;
+}>();
+
+const getNextName = (i: number) => {
+  // return `$_${Math.random().toString(36).slice(2)}`;
+  return `$range_elem${i}`;
 };
 
-export const MapArray = async <Data extends StructProxy<any[]>>(
-  props: MapProps<Data>,
+export const MapArray = async <T,>(
+  props: MapProps<T>,
   compApi: ComponentApi
 ) => {
-  const name = randName();
+  let { i = 1 } = compApi.ctx.get(MapArrayArgNameContext) ?? {};
+
+  const name = getNextName(i);
   const keyName = `${name}_key`;
 
-  return `{{range ${keyName}, ${name} := ${props.data.varname()}}}\n${await compApi.renderAsync(
-    props.render(structProxy(name), valueProxy(keyName))
+  compApi.ctx.set(MapArrayArgNameContext, { i: i + 1 });
+
+  return `{{range ${keyName}, ${name} := ${props.data.varname()}}}\n${await render(
+    props.render(structProxy(name), valueProxy(keyName)),
+    compApi
   )}\n{{end}}`;
 };

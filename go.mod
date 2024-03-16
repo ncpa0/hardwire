@@ -3,7 +3,7 @@ module github.com/ncpa0/hardwire
 go 1.21.4
 
 require (
-	github.com/antchfx/htmlquery v1.3.0
+	github.com/antchfx/xmlquery v1.3.18
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/ncpa0cpl/convenient-structures v0.0.0-20231127113943-08d3c9127a1a
 	github.com/stretchr/testify v1.8.4
@@ -11,7 +11,7 @@ require (
 )
 
 require (
-	github.com/antchfx/xpath v1.2.3 // indirect
+	github.com/antchfx/xpath v1.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/labstack/gommon v0.4.2 // indirect

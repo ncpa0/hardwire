@@ -1,26 +1,45 @@
-export type StructProxy<Struct extends object> = {
-  [K in keyof Struct]: Struct[K] extends object
-    ? StructProxy<Struct[K]>
-    : ValueProxy<Struct[K]>;
-} & {
-  varname(): string;
-};
+declare global {
+  type AsProxy<T> =
+    T extends Array<infer U>
+      ? ListProxy<U>
+      : T extends object
+        ? StructProxy<T>
+        : ValueProxy<T>;
 
-export type ValueProxy<T> = {
-  varname(): string;
-  toString(): string;
-  [Symbol.toHtmlTag](): string;
-  [Symbol.toPrimitive](): string;
-};
+  type ListProxy<T> = {
+    length: ValueProxy<number>;
+    map(fn: (item: AsProxy<T>) => JSX.Element): JSX.Element;
+    varname(): string;
+  };
 
-export const structProxy = <T extends object>(name: string): StructProxy<T> => {
+  type StructProxy<Struct extends object> = {
+    [K in keyof Struct]: AsProxy<Struct[K]>;
+  } & {
+    varname(): string;
+  };
+
+  type ValueProxy<T> = {
+    varname(): string;
+    toString(): string;
+    [Symbol.toHtmlTag](): string;
+    [Symbol.toPrimitive](): string;
+  };
+}
+
+export const structProxy = <T,>(name: string): AsProxy<T> => {
   const toString = () => {
     return `{{${name}}}`;
   };
   const o = {
     name,
-    varname: () => {
+    get length() {
+      return valueProxy(`len ${name}`);
+    },
+    varname() {
       return name;
+    },
+    map<T>(fn: (proxy: AsProxy<T>) => JSX.Element) {
+      return <MapArray data={this} render={fn} />;
     },
     toString: toString,
     [Symbol.toHtmlTag]: toString,

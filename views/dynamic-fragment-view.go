@@ -2,16 +2,18 @@ package views
 
 import (
 	"bytes"
+	"encoding/xml"
 	"errors"
+	"os"
 	"path"
 	"strings"
 	"text/template"
 
-	"github.com/antchfx/htmlquery"
-	"golang.org/x/net/html"
+	"github.com/antchfx/xmlquery"
 )
 
 type DynamicFragmentView struct {
+	id               string
 	template         *template.Template
 	requiredResource string
 	filepath         string
@@ -19,7 +21,13 @@ type DynamicFragmentView struct {
 }
 
 func NewDynamicFragmentView(root string, filepath string) (*DynamicFragmentView, error) {
-	doc, err := htmlquery.LoadDoc(path.Join(root, filepath))
+	docFile, err := os.Open(path.Join(root, filepath))
+	if err != nil {
+		return nil, err
+	}
+	defer docFile.Close()
+
+	doc, err := xmlquery.Parse(docFile)
 
 	if err != nil {
 		return nil, err
@@ -35,19 +43,21 @@ func NewDynamicFragmentView(root string, filepath string) (*DynamicFragmentView,
 		return nil, err
 	}
 
-	dynamicFragment := htmlquery.FindOne(doc, "//dynamic-fragment")
+	dynamicFragment := xmlquery.FindOne(doc, "//dynamic-fragment")
 
 	if dynamicFragment == nil {
 		return nil, errors.New("given template is not a valid dynamic fragment")
 	}
 
 	dynamicFragment.Data = "div"
-	dynamicFragment.Attr = append(dynamicFragment.Attr, html.Attribute{
-		Key: "data-frag-url",
-		Val: filepath[:len(filepath)-len(".template.html")],
+	dynamicFragment.Attr = append(dynamicFragment.Attr, xmlquery.Attr{
+		Name: xml.Name{
+			Local: "data-frag-url",
+		},
+		Value: filepath[:len(filepath)-len(".template.html")],
 	})
 	addClass(dynamicFragment, "__dynamic_fragment")
-	rawHtml, err := nodeToString(dynamicFragment)
+	rawHtml := nodeToString(dynamicFragment)
 
 	if err != nil {
 		return nil, err
@@ -65,6 +75,7 @@ func NewDynamicFragmentView(root string, filepath string) (*DynamicFragmentView,
 	routePathname = routePathname[:len(routePathname)-len(".template.html")]
 
 	return &DynamicFragmentView{
+		id:               metaFile.Hash,
 		template:         templ,
 		requiredResource: metaFile.ResourceName,
 		filepath:         filepath,

@@ -2,7 +2,7 @@ import { ComponentApi } from "jsxte";
 import path from "node:path/posix";
 import { builderCtx, routerCtx } from "../contexts";
 import { isSubpath, pathCompare } from "../utils/paths";
-import { StructProxy, structProxy } from "./gotmpl-generator/generate-go-templ";
+import { structProxy } from "./gotmpl-generator/generate-go-templ";
 
 export const StaticRoute = (
   props: JSXTE.PropsWithChildren<{
@@ -50,13 +50,13 @@ export const StaticRoute = (
   return <></>;
 };
 
-export const DynamicRoute = <T extends object = Record<never, never>>(
+export const DynamicRoute = <T,>(
   props: {
     path: string;
     require: string;
     exact?: boolean;
     title?: string;
-    render: (data: StructProxy<T>) => JSX.Element;
+    render: (data: AsProxy<T>) => JSX.Element;
   },
   compApi: ComponentApi
 ) => {

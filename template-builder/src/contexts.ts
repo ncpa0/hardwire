@@ -9,7 +9,10 @@ export const builderCtx = defineContext<{
   addRouter(routerContainerId: string): void;
   registerRoute(path: string, title: string, routerContainerId: string): void;
   getRouteContainerId(path: string): string;
-  registerDynamicFragment(require: string, templ: string): string;
+  registerDynamicFragment(
+    require: string,
+    templ: string
+  ): { id: string; url: string };
   registerRouteDynamicResource(require: string): [key: string, deepth: number];
 }>();
 

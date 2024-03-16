@@ -1,5 +1,5 @@
-import { renderToHtmlAsync } from "jsxte";
 import { builderCtx } from "./contexts";
+import { render } from "./renderer";
 import { capitalize } from "./utils/capitalize";
 import { pathCompare } from "./utils/paths";
 
@@ -69,7 +69,7 @@ export const collectRoutes = async (
     }
   };
 
-  await renderToHtmlAsync(
+  await render(
     <ExtFilesCtx.Provider value={{ register: () => "", get: () => void 0 }}>
       <builderCtx.Provider
         value={{
@@ -81,7 +81,7 @@ export const collectRoutes = async (
           registerRoute,
           getRouteContainerId,
           addRouter,
-          registerDynamicFragment: () => "",
+          registerDynamicFragment: () => ({ id: "", url: "" }),
           registerRouteDynamicResource: (r) => [capitalize(r), 1],
         }}
       >

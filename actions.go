@@ -1,8 +1,11 @@
 package hardwire
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
+	"strings"
 
 	echo "github.com/labstack/echo/v4"
 	"github.com/ncpa0/hardwire/utils"
@@ -13,76 +16,98 @@ import (
 type ActionContext struct {
 	Echo      echo.Context
 	isHandled bool
+	// list of islands that have been written
+	// to the response so far
+	updatedIslands []string
 }
 
-func (ctx *ActionContext) Reload() {
+func (actx *ActionContext) Reload() {
 	pageViewRegistry := views.GetPageViewRegistry()
 
-	ctx.isHandled = true
-	currentUrl, err := url.Parse(ctx.Echo.Request().Header.Get("HX-Current-URL"))
+	actx.isHandled = true
+	currentUrl, err := url.Parse(actx.Echo.Request().Header.Get("HX-Current-URL"))
 	if err != nil {
-		ctx.Echo.NoContent(http.StatusResetContent)
+		actx.Echo.NoContent(http.StatusResetContent)
 		return
 	}
 
 	view := pageViewRegistry.GetView(currentUrl.Path)
 	if view.IsNil() {
-		ctx.Echo.NoContent(http.StatusResetContent)
+		actx.Echo.NoContent(http.StatusResetContent)
 		return
 	}
 
-	renderResult, err := view.Get().Render(ctx.Echo)
+	renderResult, err := view.Get().Render(actx.Echo)
 
 	if err != nil {
-		utils.HandleError(ctx.Echo, err)
+		utils.HandleError(actx.Echo, err)
 		return
 	}
 
-	ctx.Echo.Response().Header().Set("HX-Retarget", "body")
-	ctx.Echo.HTML(200, renderResult.Html)
+	actx.Echo.Response().Header().Set("HX-Retarget", "body")
+	actx.Echo.HTML(200, renderResult.Html)
 }
 
-func (ctx *ActionContext) Redirect(to string) {
+func (actx *ActionContext) Redirect(to string) {
 	pageViewRegistry := views.GetPageViewRegistry()
 
-	ctx.isHandled = true
+	actx.isHandled = true
 	if to[0] != '/' {
 		to = "/" + to
 	}
 
 	view := pageViewRegistry.GetView(to)
 	if view.IsNil() {
-		ctx.Echo.Redirect(http.StatusSeeOther, to)
+		actx.Echo.Redirect(http.StatusSeeOther, to)
 		return
 	}
 
-	renderResult, err := view.Get().Render(ctx.Echo)
+	renderResult, err := view.Get().Render(actx.Echo)
 
 	if err != nil {
-		utils.HandleError(ctx.Echo, err)
+		utils.HandleError(actx.Echo, err)
 		return
 	}
 
-	ctx.Echo.Response().Header().Set("HX-Push-Url", to)
-	ctx.Echo.Response().Header().Set("HX-Retarget", "body")
-	ctx.Echo.HTML(200, renderResult.Html)
+	actx.Echo.Response().Header().Set("HX-Push-Url", to)
+	actx.Echo.Response().Header().Set("HX-Retarget", "body")
+	actx.Echo.HTML(200, renderResult.Html)
 }
 
-func (ctx *ActionContext) ReloadFragment(fragmentName string) {
-	panic("not implemented")
-	// ctx.isHandled = true
-	// currentUrl, err := url.Parse(ctx.Echo.Request().Header.Get("HX-Current-URL"))
-	// if err != nil {
-	// 	ctx.Echo.NoContent(http.StatusResetContent)
-	// }
+func (actx *ActionContext) UpdateIslands(islandsIDs ...string) {
+	allIslands := views.GetIslands()
+	dynFragments := views.GetDynamicFragmentViewRegistry()
+	for _, islandID := range islandsIDs {
+		if slices.Contains(actx.updatedIslands, islandID) {
+			continue
+		}
 
-	// view := viewRegistry.GetView(currentUrl.Path)
-	// if view.IsNil() {
-	// 	ctx.Echo.NoContent(http.StatusResetContent)
-	// }
+		ok, island := allIslands.Find(func(island *views.Island, _ int) bool {
+			return island.ID == islandID
+		})
 
-	// ctx.Echo.Response().Header().Set("HX-Retarget", "body")
-	// ctx.Echo.String(200, view.Get().GetNode().ToHtml())
+		if !ok {
+			actx.Echo.Logger().Error("island not found: ", islandID)
+			return
+		}
+
+		fragment := dynFragments.GetFragmentById(island.FragmentID)
+
+		if fragment.IsNil() {
+			actx.Echo.Logger().Error("fragment not found: ", island.FragmentID, ", required by island: ", island.ID)
+			return
+		}
+
+		html, err := buildFragment(fragment.Get(), actx.Echo)
+		if err != nil {
+			actx.Echo.Logger().Error("error building fragment: ", err)
+			return
+		}
+
+		actx.Echo.Response().Write([]byte(fmt.Sprintf("\n\n<div id=\"%s\" hx-swap-oob=\"true\">%s</div>", island.ID, html)))
+		actx.updatedIslands = append(actx.updatedIslands, islandID)
+		actx.isHandled = true
+	}
 }
 
 var actions *Array[iaction] = &Array[iaction]{}
@@ -178,15 +203,53 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 	if err != nil {
 		return echo.ErrBadRequest
 	}
-	actionContext := &ActionContext{
+	actx := &ActionContext{
 		Echo: ctx,
 	}
-	err = action.handler(body, actionContext)
+	err = action.handler(body, actx)
 	if err != nil {
 		return err
 	}
 
-	if !actionContext.isHandled {
+	islandsHeader := ctx.Request().Header.Get("Hardwire-Islands-Update")
+	allIslands := views.GetIslands()
+	dynFragments := views.GetDynamicFragmentViewRegistry()
+	if islandsHeader != "" && utils.IsStatusPositive(ctx.Response().Status) {
+		islandsIDs := strings.Split(islandsHeader, ";")
+		for _, islandID := range islandsIDs {
+			if slices.Contains(actx.updatedIslands, islandID) {
+				continue
+			}
+
+			ok, island := allIslands.Find(func(i1 *views.Island, i2 int) bool {
+				return i1.ID == islandID
+			})
+
+			if !ok {
+				ctx.Logger().Error("island not found: ", islandID)
+				return echo.ErrNotFound
+			}
+
+			fragment := dynFragments.GetFragmentById(island.FragmentID)
+
+			if fragment.IsNil() {
+				ctx.Logger().Error("fragment not found: ", island.FragmentID, ", required by island: ", island.ID)
+				return echo.ErrNotFound
+			}
+
+			html, err := buildFragment(fragment.Get(), ctx)
+			if err != nil {
+				ctx.Logger().Error("error building fragment: ", err)
+				return echo.ErrInternalServerError
+			}
+
+			ctx.Response().Write([]byte(fmt.Sprintf("\n\n<div id=\"%s\" hx-swap-oob=\"true\">%s</div>", island.ID, html)))
+			actx.updatedIslands = append(actx.updatedIslands, islandID)
+			actx.isHandled = true
+		}
+	}
+
+	if !actx.isHandled {
 		return ctx.NoContent(http.StatusNoContent)
 	}
 
