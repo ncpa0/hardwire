@@ -33,7 +33,7 @@ func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl st
 
 	install := utils.Execute(("bun"), []string{
 		"a",
-		"hardwire-html-generator@0.0.1-beta.6", // Remember to update version after publish
+		"hardwire-html-generator@0.0.1-beta.7", // Remember to update version after publish
 	}, &utils.ExecuteOptions{
 		Wd: pagesDir,
 	})
