@@ -34,9 +34,15 @@ const attributeToHtmlTagString = ([key, value]: [
   string | boolean | number | undefined,
 ]): string => {
   if (value === true) {
-    return `${key}`;
+    return `${key}="${key}"`;
   }
-  if (value === false || value === null || value === undefined) {
+  if (
+    value === false ||
+    value === "false" ||
+    value === "" ||
+    value === null ||
+    value === undefined
+  ) {
     return "";
   }
   return `${key}="${sanitizeAttributeValue(String(value))}"`;
