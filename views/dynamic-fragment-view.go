@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/antchfx/xmlquery"
+	"github.com/ncpa0/hardwire/utils"
 )
 
 type DynamicFragmentView struct {
@@ -57,7 +58,7 @@ func NewDynamicFragmentView(root string, filepath string) (*DynamicFragmentView,
 		Value: filepath[:len(filepath)-len(".template.html")],
 	})
 	addClass(dynamicFragment, "__dynamic_fragment")
-	rawHtml := nodeToString(dynamicFragment)
+	rawHtml := utils.XmlNodeToString(dynamicFragment)
 
 	if err != nil {
 		return nil, err

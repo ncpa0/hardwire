@@ -15,7 +15,7 @@ export type FormActionProps = JSX.IntrinsicElements["form"] & {
    * If the island is an "island list" and this list contains keys, only list items
    * of the specified key(s) will be updated.
    */
-  items?: string[];
+  items?: Array<string | ValueProxy<string>>;
 };
 export type SubmitActionProps = JSX.IntrinsicElements["button"];
 
@@ -69,7 +69,7 @@ function HiddenInput({
 const FormContext = defineContext<{
   formID: string;
   islands: string[];
-  items?: string[];
+  items?: Array<string | ValueProxy<string>>;
 }>();
 
 let i = 1;
@@ -156,7 +156,7 @@ export const $action = (
           "formHeaders",
           currentPath,
           formCtx.islands,
-          formCtx.items ?? [],
+          (formCtx.items ?? []).map(String),
         )}`;
       }
 
