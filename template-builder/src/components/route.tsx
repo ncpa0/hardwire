@@ -10,7 +10,7 @@ export const StaticRoute = (
     exact?: true;
     title?: string;
   }>,
-  compApi: ComponentApi
+  compApi: ComponentApi,
 ) => {
   const app = compApi.ctx.getOrFail(builderCtx);
   const router = compApi.ctx.getOrFail(routerCtx);
@@ -30,6 +30,7 @@ export const StaticRoute = (
     return (
       <builderCtx.Provider
         value={{
+          staticUrl: app.staticUrl,
           currentRoute: app.currentRoute.concat(props.path),
           currentRouteTitle: app.currentRouteTitle,
           selectedRoute: app.selectedRoute,
@@ -58,7 +59,7 @@ export const DynamicRoute = <T,>(
     title?: string;
     render: (data: AsProxy<T>) => JSX.Element;
   },
-  compApi: ComponentApi
+  compApi: ComponentApi,
 ) => {
   const app = compApi.ctx.getOrFail(builderCtx);
   const router = compApi.ctx.getOrFail(routerCtx);
@@ -76,11 +77,12 @@ export const DynamicRoute = <T,>(
 
   if (isSubpath(currentRoute, thisRoute)) {
     const [resourceKey, depth] = app.registerRouteDynamicResource(
-      props.require
+      props.require,
     );
     return (
       <builderCtx.Provider
         value={{
+          staticUrl: app.staticUrl,
           currentRoute: app.currentRoute.concat(props.path),
           currentRouteTitle: app.currentRouteTitle,
           selectedRoute: app.selectedRoute,

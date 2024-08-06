@@ -1,6 +1,10 @@
 import path from "node:path";
 import { collectRoutes } from "./collect-routes";
-import { RouteMetaContext, builderCtx } from "./contexts";
+import {
+  RegisterExternalFileOptions,
+  RouteMetaContext,
+  builderCtx,
+} from "./contexts";
 import { render } from "./renderer";
 import { capitalize } from "./utils/capitalize";
 
@@ -35,11 +39,11 @@ type Page = {
 export const buildPages = async (
   entrypointDir: string,
   tree: JSX.Element,
-  staticUrl: string
+  staticUrl: string,
 ) => {
   console.log("Collecting routes...");
 
-  const routes = await collectRoutes(entrypointDir, tree);
+  const routes = await collectRoutes(entrypointDir, tree, staticUrl);
 
   const getRouteContainerId = (path: string): string => {
     return routes.get(path)?.containerID ?? routes.topRouter;
@@ -50,9 +54,13 @@ export const buildPages = async (
   const registerExternalFile = (
     contents: string,
     name: string,
-    type: "js" | "css"
+    type: "js" | "css",
+    options?: RegisterExternalFileOptions,
   ) => {
-    const hashedName = createHash(`${name}_${contents}`);
+    let hashedName = createHash(`${name}_${contents}`);
+    if (options?.keepName) {
+      hashedName = `${name}_${hashedName}`;
+    }
     switch (type) {
       case "css": {
         const fPath = `/assets/css/${hashedName}.css`;
@@ -118,7 +126,7 @@ export const buildPages = async (
     let requiredResources: { key: string; res: string }[] = [];
 
     const registerRouteDynamicResource = (
-      resource: string
+      resource: string,
     ): [string, number] => {
       const key = capitalize(resource.replace(/[^a-zA-Z]/g, "").trim());
       requiredResources.push({ key, res: resource });
@@ -136,6 +144,7 @@ export const buildPages = async (
         >
           <builderCtx.Provider
             value={{
+              staticUrl: staticUrl,
               isBuildPhase: true,
               entrypointDir: entrypointDir,
               selectedRoute: route.path.split("/"),
@@ -151,7 +160,7 @@ export const buildPages = async (
             {tree}
           </builderCtx.Provider>
         </ExtFilesCtx.Provider>
-      </RouteMetaContext.Provider>
+      </RouteMetaContext.Provider>,
     );
 
     if (PRETTY_HTML) {

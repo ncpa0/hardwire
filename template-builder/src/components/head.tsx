@@ -1,4 +1,6 @@
 import { builderCtx } from "../contexts";
+import path from "node:path";
+import { SetupClientHelpers } from "./_helpers.client";
 
 export const Head: JSXTE.Component<{
   /**
@@ -15,10 +17,23 @@ export const Head: JSXTE.Component<{
   htmxIntegrityHash?: string;
 }> = (props, componentApi) => {
   const app = componentApi.ctx.getOrFail(builderCtx);
-  const htmxVer = props.htmxVersion ?? "1.9.10";
+  const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
+  const htmxVer = props.htmxVersion ?? "2.0.1";
   let integrity: string | undefined = undefined;
 
   switch (htmxVer) {
+    case "2.0.1":
+      integrity =
+        "sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/";
+      break;
+    case "1.9.12":
+      integrity =
+        "sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2";
+      break;
+    case "1.9.11":
+      integrity =
+        "sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0";
+      break;
     case "1.9.10":
       integrity =
         "sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC";
@@ -69,15 +84,23 @@ export const Head: JSXTE.Component<{
     integrity = props.htmxIntegrityHash;
   }
 
+  const hwScript = extFiles.register(
+    `(${String(SetupClientHelpers)})()`,
+    "hardwire",
+    "js",
+    { keepName: true },
+  );
+
   return (
     <head>
       <script
         src={`https://unpkg.com/htmx.org@${htmxVer}`}
         integrity={integrity}
         crossorigin="anonymous"
-      ></script>
+      />
       <title>{app.currentRouteTitle}</title>
       {props.children}
+      <script src={hwScript} />
     </head>
   );
 };

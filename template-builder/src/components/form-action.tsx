@@ -1,8 +1,8 @@
 import { ComponentApi, defineContext } from "jsxte";
 import { builderCtx } from "../contexts";
 import { defined } from "../utils/defined";
-import { htmxJs } from "../utils/htmx-js";
 import { IslandMap } from "./island";
+import { Client } from "./_helpers.client";
 
 export type FormActionProps = JSX.IntrinsicElements["form"] & {
   data?: Record<string, string | number | boolean | ValueProxy<any>>;
@@ -91,7 +91,7 @@ function getNextFormID() {
 export const createFormAction = (
   method: HttpMethod,
   action: string,
-  relatedIslands: JSXTE.Component<any>[] = []
+  relatedIslands: JSXTE.Component<any>[] = [],
 ) => {
   const uid = getNextFormID();
 
@@ -101,7 +101,7 @@ export const createFormAction = (
     },
     Form: (
       { children, data, islands = [], ...props }: FormActionProps,
-      api: ComponentApi
+      api: ComponentApi,
     ) => {
       if (api.ctx.has(FormContext)) {
         throw new Error("Form actions cannot be nested.");
@@ -134,7 +134,7 @@ export const createFormAction = (
 
       if (formCtx.formID !== uid) {
         throw new Error(
-          "The submit button must be a child of it's own form component."
+          "The submit button must be a child of it's own form component.",
         );
       }
 
@@ -144,23 +144,9 @@ export const createFormAction = (
       btnProps["hx-swap"] = "none";
 
       if (formCtx.islands.length > 0) {
-        btnProps["hx-headers"] = htmxJs(function () {
-          const relatedIslands = ["%ISLANDS%"];
-          const presentIslands = [];
-          for (let i = 0; i < relatedIslands.length; i++) {
-            const islandID = relatedIslands[i];
-            const islandEl = document.getElementById(islandID);
-            if (islandEl) {
-              presentIslands.push(islandID);
-            }
-          }
-          return {
-            "Hardwire-Islands-Update": presentIslands.join(";"),
-            "Hardwire-Dynamic-Fragment-Request": "%DYN_PATHNAME%",
-          };
-        })
-          .replace('["%ISLANDS%"]', JSON.stringify(formCtx.islands))
-          .replace("%DYN_PATHNAME%", "/" + bldr.currentRoute.join("/"));
+        const currentPath = bldr.currentRoute.join("/");
+        btnProps["hx-headers"] =
+          `javascript: ...${Client.call("formHeaders", currentPath, formCtx.islands)}`;
       }
 
       return <button {...btnProps} />;

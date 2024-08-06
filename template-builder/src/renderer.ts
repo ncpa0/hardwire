@@ -4,6 +4,7 @@ import {
   JsxteRenderer,
   JsxteRenderError,
 } from "jsxte";
+import { sanitizeForHtml } from "./utils/sanitize-for-html";
 
 const SELF_CLOSING_TAG_LIST = [
   "area",
@@ -22,13 +23,6 @@ const SELF_CLOSING_TAG_LIST = [
   "wbr",
 ];
 
-const sanitizeAttributeValue = (value: string): string => {
-  return value
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-};
-
 const attributeToHtmlTagString = ([key, value]: [
   string,
   string | boolean | number | undefined,
@@ -45,7 +39,7 @@ const attributeToHtmlTagString = ([key, value]: [
   ) {
     return "";
   }
-  return `${key}="${sanitizeAttributeValue(String(value))}"`;
+  return `${key}="${sanitizeForHtml(String(value))}"`;
 };
 
 const mapAttributesToHtmlTagString = (attributes: [string, any][]): string => {

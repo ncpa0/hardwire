@@ -1,6 +1,7 @@
 import { ContextDefinition, defineContext } from "jsxte";
 
 export const builderCtx = defineContext<{
+  staticUrl: string;
   isBuildPhase: boolean;
   entrypointDir: string;
   currentRoute: string[];
@@ -11,22 +12,36 @@ export const builderCtx = defineContext<{
   getRouteContainerId(path: string): string;
   registerDynamicFragment(
     require: string,
-    templ: string
+    templ: string,
   ): { id: string; url: string };
   registerRouteDynamicResource(require: string): [key: string, deepth: number];
 }>();
 
 export const routerCtx = defineContext<{ containerID: string }>();
 
+export type RegisterExternalFileOptions = {
+  keepName?: boolean;
+};
+
 declare global {
   const ExtFilesCtx: ContextDefinition<{
-    register(content: string, name: string, type: string): string;
+    register(
+      content: string,
+      name: string,
+      type: "js" | "css",
+      options?: RegisterExternalFileOptions,
+    ): string;
     get(name: string): string | undefined;
   }>;
 }
 
 export const ExtFilesCtx = defineContext<{
-  register(content: string, name: string, type: string): string;
+  register(
+    content: string,
+    name: string,
+    type: "js" | "css",
+    options?: RegisterExternalFileOptions,
+  ): string;
   get(name: string): string;
 }>();
 
