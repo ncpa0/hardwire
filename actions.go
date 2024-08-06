@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/antchfx/xmlquery"
 	echo "github.com/labstack/echo/v4"
 	"github.com/ncpa0/hardwire/utils"
 	"github.com/ncpa0/hardwire/views"
@@ -247,12 +248,17 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 		return err
 	}
 
-	islandsHeader := ctx.Request().Header.Get("Hardwire-Islands-Update")
+	islandIDs := utils.ParseHeaderList(
+		ctx.Request().Header.Get("Hardwire-Islands-Update"),
+	)
+	itemKeys := utils.ParseHeaderList(
+		ctx.Request().Header.Get("Hardwire-Dynamic-List-Patch"),
+	)
+
 	allIslands := views.GetIslands()
 	dynFragments := views.GetDynamicFragmentViewRegistry()
-	if islandsHeader != "" && utils.IsStatusPositive(ctx.Response().Status) {
-		islandsIDs := strings.Split(islandsHeader, ";")
-		for _, islandID := range islandsIDs {
+	if islandIDs.Length() > 0 && utils.IsStatusPositive(ctx.Response().Status) {
+		for _, islandID := range islandIDs.ToSlice() {
 			if slices.Contains(actx.updatedIslands, islandID) {
 				continue
 			}
@@ -279,9 +285,35 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 				return echo.ErrInternalServerError
 			}
 
-			ctx.Response().Write([]byte(fmt.Sprintf("\n\n<div id=\"%s\" hx-swap-oob=\"true\">%s</div>", island.ID, html)))
-			actx.updatedIslands = append(actx.updatedIslands, islandID)
-			actx.isHandled = true
+			if itemKeys.Length() == 0 {
+				ctx.Response().Write([]byte(fmt.Sprintf("\n<div id=\"%s\" hx-swap-oob=\"innerHtml\">%s</div>", island.ID, html)))
+				actx.updatedIslands = append(actx.updatedIslands, islandID)
+				actx.isHandled = true
+			} else {
+				strReader := strings.NewReader(html)
+				node, err := xmlquery.Parse(strReader)
+				if err != nil {
+					ctx.Logger().Error("error parsing fragment output html: ", err)
+					return echo.ErrInternalServerError
+				}
+
+				items := Array[string]{}
+				for _, itemKey := range itemKeys.ToSlice() {
+					itemNode, err := xmlquery.Query(node, fmt.Sprintf("//*[@data-item-key=\"%s\"]", itemKey))
+					if err == nil {
+						itemHtml := utils.XmlNodeToString(itemNode)
+						items.Push(fmt.Sprintf(
+							"<div hx-swap-oob=\"innerHtml:.dynamic-list-element[data-item-key=%s]\">%s</div>",
+							itemKey,
+							itemHtml,
+						))
+					}
+				}
+
+				ctx.Response().Write([]byte("\n" + strings.Join(items.ToSlice(), "\n")))
+				actx.updatedIslands = append(actx.updatedIslands, islandID)
+				actx.isHandled = true
+			}
 		}
 	}
 

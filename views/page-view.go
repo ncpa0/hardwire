@@ -40,21 +40,6 @@ type NodeProxy struct {
 	template *template.Template
 }
 
-const PREFIX_LEN = len("<?xml version=\"1.0\"?>")
-const TEMPL_QUOTE = "@#34T;"
-
-func nodeToString(node *xmlquery.Node) string {
-	s := node.OutputXMLWithOptions(
-		xmlquery.WithOutputSelf(),
-		xmlquery.WithPreserveSpace(),
-	)
-	if strings.HasPrefix(s, "<?xml") {
-		s = s[PREFIX_LEN:]
-	}
-	s = strings.ReplaceAll(s, TEMPL_QUOTE, "\"")
-	return s
-}
-
 func addClass(node *xmlquery.Node, class string) {
 	var currentClassAttribute *xmlquery.Attr
 	for i, attr := range node.Attr {
@@ -100,7 +85,7 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 	var rawHtml string
 	var title string
 	var routePathname string = filepath
-	rawHtml = nodeToString(doc)
+	rawHtml = utils.XmlNodeToString(doc)
 
 	titleNode := xmlquery.FindOne(doc, "//title")
 	if titleNode != nil && titleNode.FirstChild != nil {
@@ -212,7 +197,7 @@ func (v *PageView) QuerySelector(selector string) *utils.Option[NodeProxy] {
 		return utils.Empty[NodeProxy]()
 	}
 
-	rawHtml := nodeToString(result)
+	rawHtml := utils.XmlNodeToString(result)
 
 	var templ *template.Template
 	if v.isDynamic {
@@ -243,7 +228,7 @@ func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 
 	result := make([]*NodeProxy, len(nodeList))
 	for _, node := range nodeList {
-		rawHtml := nodeToString(node)
+		rawHtml := utils.XmlNodeToString(node)
 
 		var templ *template.Template
 		if v.isDynamic {

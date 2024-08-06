@@ -11,6 +11,11 @@ export type FormActionProps = JSX.IntrinsicElements["form"] & {
    * This field does not override the default action island list but appends to it.
    */
   islands?: JSXTE.Component<any>[];
+  /**
+   * If the island is an "island list" and this list contains keys, only list items
+   * of the specified key(s) will be updated.
+   */
+  items?: string[];
 };
 export type SubmitActionProps = JSX.IntrinsicElements["button"];
 
@@ -64,6 +69,7 @@ function HiddenInput({
 const FormContext = defineContext<{
   formID: string;
   islands: string[];
+  items?: string[];
 }>();
 
 let i = 1;
@@ -88,7 +94,7 @@ function getNextFormID() {
  * // clicking the submit, will send a POST request that will trigger
  * // the "create-article" action that's registered on the server.
  */
-export const createFormAction = (
+export const $action = (
   method: HttpMethod,
   action: string,
   relatedIslands: JSXTE.Component<any>[] = [],
@@ -117,6 +123,7 @@ export const createFormAction = (
           value={{
             formID: uid,
             islands: islandsIDs,
+            items: props.items,
           }}
         >
           <form {...props} id={uid}>
@@ -145,8 +152,12 @@ export const createFormAction = (
 
       if (formCtx.islands.length > 0) {
         const currentPath = bldr.currentRoute.join("/");
-        btnProps["hx-headers"] =
-          `javascript: ...${Client.call("formHeaders", currentPath, formCtx.islands)}`;
+        btnProps["hx-headers"] = `javascript: ...${Client.call(
+          "formHeaders",
+          currentPath,
+          formCtx.islands,
+          formCtx.items ?? [],
+        )}`;
       }
 
       return <button {...btnProps} />;

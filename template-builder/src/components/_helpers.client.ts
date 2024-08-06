@@ -1,17 +1,29 @@
 export function SetupClientHelpers() {
   class Hardwire {
-    static formHeaders(currentRouter: string, islands: string[]) {
+    static formHeaders(
+      currentRouter: string,
+      islands: string[],
+      items: string[],
+    ) {
       let presentIslands = "";
       for (let i = 0; i < islands.length; i++) {
         const islandID = islands[i];
         const islandEl = document.getElementById(islandID);
         if (islandEl) {
-          presentIslands += "," + islandID;
+          presentIslands += ";" + islandID;
         }
       }
+
+      let listItems = "";
+      for (let i = 0; i < items.length; i++) {
+        const itemKey = items[i];
+        listItems += ";" + itemKey;
+      }
+
       return {
         "Hardwire-Islands-Update": presentIslands.slice(1),
         "Hardwire-Dynamic-Fragment-Request": currentRouter,
+        "Hardwire-Dynamic-List-Patch": listItems.slice(1),
       };
     }
   }

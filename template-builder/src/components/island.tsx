@@ -1,16 +1,16 @@
 import { DynamicFragmentProps } from "./dynamic-fragment";
 
-export const IslandMap = new Map<
-  JSXTE.Component<any>,
-  {
-    id: string;
-    fragmentID: string;
-  }
->();
+export type IslandDefinition = {
+  id: string;
+  fragmentID: string;
+  type?: "list";
+};
+
+export const IslandMap = new Map<JSXTE.Component<any>, IslandDefinition>();
 
 export function $island<T extends any, P extends object = {}>(
   options: Omit<DynamicFragmentProps<T>, "render"> & { id: string },
-  Component: (props: P, data: AsProxy<T>) => JSX.Element
+  Component: (props: P, data: AsProxy<T>) => JSX.Element,
 ): JSXTE.Component<P> {
   const { id, ...dynamicFragmentProps } = options;
 

@@ -8,7 +8,9 @@ declare global {
 
   type ListProxy<T> = {
     length: ValueProxy<number>;
-    map(fn: (item: AsProxy<T>) => JSX.Element): JSX.Element;
+    map(
+      fn: (item: AsProxy<T>, key: ValueProxy<string>) => JSX.Element,
+    ): JSX.Element;
     varname(): string;
   };
 
@@ -38,7 +40,7 @@ export const structProxy = <T,>(name: string): AsProxy<T> => {
     varname() {
       return name;
     },
-    map<T>(fn: (proxy: AsProxy<T>) => JSX.Element) {
+    map<T>(fn: (proxy: AsProxy<T>, key: ValueProxy<string>) => JSX.Element) {
       return <MapArray data={this} render={fn} />;
     },
     toString: toString,
@@ -67,7 +69,7 @@ export const structProxy = <T,>(name: string): AsProxy<T> => {
 };
 
 export const valueProxy = <T extends string | number | boolean>(
-  value: T
+  value: T,
 ): ValueProxy<T> => {
   return structProxy(value as any) as any;
 };

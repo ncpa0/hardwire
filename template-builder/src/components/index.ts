@@ -1,7 +1,7 @@
 import { DynamicFragment } from "./dynamic-fragment";
-import { createFormAction } from "./form-action";
+import { $action } from "./form-action";
 import { If } from "./gotmpl-generator/if";
-import { MapArray } from "./gotmpl-generator/range";
+import { MapArray } from "./gotmpl-generator/map-array";
 import { Head } from "./head";
 import { $island } from "./island";
 import { Link } from "./link";
@@ -17,6 +17,7 @@ import { DynamicRoute, StaticRoute } from "./route";
 import { Switch } from "./router";
 import { Script } from "./script";
 import { Style } from "./style";
+import { $islandList } from "./dynamic-list";
 
 export const GLOBALS = {
   Switch,
@@ -29,13 +30,14 @@ export const GLOBALS = {
   DynamicFragment,
   If,
   MapArray,
-  createFormAction,
   Redirect,
   Locale,
   Localizations,
   Translate,
   useTranslation,
+  $action,
   $island,
+  $islandList,
 };
 
 export const registerGlobalFunctions = () => {
@@ -51,8 +53,8 @@ export const registerGlobalFunctions = () => {
             writable: false,
           },
         ];
-      })
-    )
+      }),
+    ),
   );
 };
 
@@ -67,12 +69,13 @@ declare global {
   const DynamicFragment: typeof GLOBALS.DynamicFragment;
   const If: typeof GLOBALS.If;
   const MapArray: typeof GLOBALS.MapArray;
-  const createFormAction: typeof GLOBALS.createFormAction;
   const Redirect: typeof GLOBALS.Redirect;
   const Locale: typeof GLOBALS.Locale;
   const Localizations: typeof GLOBALS.Localizations;
   const Translate: typeof GLOBALS.Translate;
   const useTranslation: typeof GLOBALS.useTranslation;
+  const $action: typeof GLOBALS.$action;
   const $island: typeof GLOBALS.$island;
+  const $islandList: typeof GLOBALS.$islandList;
   type TFunction = TF;
 }

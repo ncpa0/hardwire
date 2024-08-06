@@ -18,7 +18,7 @@ const getNextName = (i: number) => {
 
 export const MapArray = async <T,>(
   props: MapProps<T>,
-  compApi: ComponentApi
+  compApi: ComponentApi,
 ) => {
   let { i = 1 } = compApi.ctx.get(MapArrayArgNameContext) ?? {};
 
@@ -27,8 +27,16 @@ export const MapArray = async <T,>(
 
   compApi.ctx.set(MapArrayArgNameContext, { i: i + 1 });
 
-  return `{{range ${keyName}, ${name} := ${props.data.varname()}}}\n${await render(
-    props.render(structProxy(name), valueProxy(keyName)),
-    compApi
-  )}\n{{end}}`;
+  return (
+    <>
+      {`{{range ${keyName}, ${name} := ${props.data.varname()}}}`}
+      {props.render(structProxy(name), valueProxy(keyName))}
+      {`{{end}}`}
+    </>
+  );
+
+  // return `{{range ${keyName}, ${name} := ${props.data.varname()}}}\n${await render(
+  //   props.render(structProxy(name), valueProxy(keyName)),
+  //   compApi,
+  // )}\n{{end}}`;
 };

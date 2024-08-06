@@ -7,7 +7,7 @@ declare global {
   namespace JSX {
     interface IntrinsicElements {
       "dynamic-fragment": {
-        class?: string;
+        class?: string | ValueProxy<string>;
         children?: JSX.Element;
       };
     }
@@ -30,7 +30,7 @@ export type DynamicFragmentProps<T> = {
 
 export const DynamicFragment = async <T,>(
   props: DynamicFragmentProps<T>,
-  compApi: ComponentApi
+  compApi: ComponentApi,
 ) => {
   const bldr = compApi.ctx.getOrFail(builderCtx);
   const templ = await render(
@@ -38,7 +38,7 @@ export const DynamicFragment = async <T,>(
       {`{{$frag_root := .}}`}
       {props.render(structProxy("$frag_root"))}
     </dynamic-fragment>,
-    compApi
+    compApi,
   );
 
   const { url, id } = bldr.registerDynamicFragment(props.require, templ);
