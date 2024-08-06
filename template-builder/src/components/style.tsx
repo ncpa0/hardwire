@@ -1,4 +1,4 @@
-import { CompressOptions, MinifyOptions, minify as cssMinify } from "csso";
+import { transform } from "lightningcss";
 import esbuild from "esbuild";
 import type { ComponentApi } from "jsxte";
 import path from "node:path";
@@ -83,7 +83,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
     }
   }
 
-  const options: MinifyOptions & CompressOptions = {};
+  // const options: MinifyOptions & CompressOptions = {};
   let filepath: string = "";
   let stylesheet: string | undefined;
 
@@ -105,11 +105,16 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
     return null;
   }
 
-  const result = await cssMinify(stylesheet, options);
+  const result = transform({
+    code: Buffer.from(stylesheet),
+    filename: filepath,
+    minify: IS_PROD,
+    sourceMap: !IS_PROD,
+  });
 
-  let contents = result.css;
+  let contents = new TextDecoder().decode(result.code);
   if (filepath) {
-    contents = `/* ${filepath} */\n${result.css}`;
+    contents = `/* ${filepath} */\n${contents}`;
   }
 
   if (props.inline) {
@@ -119,7 +124,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   const src = extFiles.register(
     contents,
     props.package ?? (props.path ? path.basename(props.path!) : "inline"),
-    "css"
+    "css",
   );
 
   return (

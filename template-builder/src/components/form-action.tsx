@@ -19,7 +19,7 @@ type BaseActionProps = {
 };
 
 export type QuickActionButtonProps = JSX.IntrinsicElements["button"] &
-  BaseActionProps & { formProps: JSX.IntrinsicElements["form"] };
+  BaseActionProps & { formProps?: JSX.IntrinsicElements["form"] };
 export type FormActionProps = JSX.IntrinsicElements["form"] & BaseActionProps;
 export type SubmitActionProps = JSX.IntrinsicElements["button"];
 
@@ -121,7 +121,6 @@ export const $action = (actionParams: {
     },
     QuickButton(
       {
-        children,
         data,
         islands = [],
         items,
