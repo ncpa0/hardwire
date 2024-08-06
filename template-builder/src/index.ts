@@ -3,8 +3,6 @@
 /// <reference types="bun-types" />
 import path from "node:path";
 import { Argv } from "./argv";
-import { buildCmd } from "./command-build/build";
-import { initCmd } from "./command-init/init";
 
 declare global {
   namespace JSXTE {
@@ -23,9 +21,10 @@ async function main() {
       dir: "string",
     },
     async (args) => {
+      const { initCmd } = await import("./command-init/init");
       const wd = path.resolve(args.dir);
       await initCmd(wd);
-    }
+    },
   );
 
   const build = argv.registerCommand(
@@ -37,16 +36,17 @@ async function main() {
       staticurl: "string",
     },
     async (args) => {
+      const { buildCmd } = await import("./command-build/build");
       const srcFile = path.resolve(args.src);
       const outDir = path.resolve(args.outdir);
       const staticDir = path.resolve(args.staticdir);
       await buildCmd(srcFile, outDir, staticDir, args.staticurl);
-    }
+    },
   );
 
   init.setDescription("Initializes a new project in the given directory.");
   build.setDescription(
-    "Generates static HTML files from the given JSX component."
+    "Generates static HTML files from the given JSX component.",
   );
 
   argv.run();
