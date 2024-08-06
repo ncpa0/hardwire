@@ -303,7 +303,7 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 					if err == nil {
 						itemHtml := utils.XmlNodeToString(itemNode)
 						items.Push(fmt.Sprintf(
-							"<div hx-swap-oob=\"innerHtml:.dynamic-list-element[data-item-key=%s]\">%s</div>",
+							"<div hx-swap-oob=\"innerHtml:.dynamic-list-element[data-item-key='%s']\">%s</div>",
 							itemKey,
 							itemHtml,
 						))
