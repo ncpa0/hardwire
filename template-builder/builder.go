@@ -1,6 +1,7 @@
 package templatebuilder
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -25,11 +26,9 @@ func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl st
 		staticDir = path.Join(wd, staticDir)
 	}
 
-	if configuration.Current.DebugMode {
-		fmt.Print("Building static HTML...\n")
-	}
-
 	pagesDir := path.Dir(entrypoint)
+
+	initProject(pagesDir)
 
 	install := utils.Execute(("bun"), []string{
 		"a",
@@ -67,6 +66,10 @@ func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl st
 		return fmt.Errorf("error installing html builder package:\n%s %s", builderInit.Stdout, builderInit.Stderr)
 	}
 
+	if configuration.Current.DebugMode {
+		fmt.Print("Building static HTML...\n")
+	}
+
 	result := utils.Execute("bun", []string{
 		"x",
 		"hardwire-html-generator",
@@ -90,5 +93,56 @@ func BuildPages(entrypoint string, outDir string, staticDir string, staticUrl st
 		fmt.Printf("%s\n", result.Stdout)
 	}
 
+	return nil
+}
+
+type PackageJson struct {
+	Name            string            `json:"name"`
+	DevDependencies map[string]string `json:"devDependencies"`
+	Main            string            `json:"main"`
+}
+
+func initProject(srcpath string) error {
+	if _, err := os.Stat(srcpath); os.IsNotExist(err) {
+		err := os.MkdirAll(srcpath, 0755)
+		if err != nil {
+			return err
+		}
+	}
+
+	pkgJsonPath := path.Join(srcpath, "package.json")
+	if _, err := os.Stat(pkgJsonPath); os.IsNotExist(err) {
+
+		if configuration.Current.DebugMode {
+			fmt.Print("Initializing the templates project\n")
+		}
+
+		pkgJson := PackageJson{
+			Name: "page-templates",
+			DevDependencies: map[string]string{
+				"typescript": "latest",
+			},
+			Main: "index.tsx",
+		}
+
+		content, err := json.Marshal(pkgJson)
+
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(pkgJsonPath, content, 0644)
+		if err != nil {
+			return err
+		}
+
+		install := utils.Execute(("bun"), []string{
+			"i",
+		}, nil)
+
+		if install.Err != nil {
+			return fmt.Errorf("error installing html builder package:\n%s %s", install.Stdout, install.Stderr)
+		}
+	}
 	return nil
 }
