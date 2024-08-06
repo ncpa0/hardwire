@@ -4,7 +4,7 @@ import { defined } from "../utils/defined";
 import { IslandMap } from "./island";
 import { Client } from "./_helpers.client";
 
-export type FormActionProps = JSX.IntrinsicElements["form"] & {
+type BaseActionProps = {
   data?: Record<string, string | number | boolean | ValueProxy<any>>;
   /**
    * List of related island components that should be updated after the action is performed.
@@ -17,6 +17,10 @@ export type FormActionProps = JSX.IntrinsicElements["form"] & {
    */
   items?: Array<string | ValueProxy<string>>;
 };
+
+export type QuickActionButtonProps = JSX.IntrinsicElements["button"] &
+  BaseActionProps & { formProps: JSX.IntrinsicElements["form"] };
+export type FormActionProps = JSX.IntrinsicElements["form"] & BaseActionProps;
 export type SubmitActionProps = JSX.IntrinsicElements["button"];
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -94,21 +98,73 @@ function getNextFormID() {
  * // clicking the submit, will send a POST request that will trigger
  * // the "create-article" action that's registered on the server.
  */
-export const $action = (
-  method: HttpMethod,
-  action: string,
-  relatedIslands: JSXTE.Component<any>[] = [],
-) => {
+export const $action = (actionParams: {
+  method: HttpMethod;
+  action: string;
+  /**
+   * List of island components that should be updated on the page whenver
+   * this action is performed.
+   */
+  islands: JSXTE.Component<any>[];
+}) => {
+  const {
+    method,
+    action: actionName,
+    islands: relatedIslands = [],
+  } = actionParams;
+
   const uid = getNextFormID();
 
-  return {
+  const action = {
     get id() {
       return uid;
     },
-    Form: (
-      { children, data, islands = [], ...props }: FormActionProps,
+    QuickButton(
+      {
+        children,
+        data,
+        islands = [],
+        items,
+        formProps,
+        ...props
+      }: QuickActionButtonProps,
       api: ComponentApi,
-    ) => {
+    ) {
+      const bldr = api.ctx.getOrFail(builderCtx);
+
+      const btnProps: Record<string, any> = { ...props };
+      btnProps["hx-include"] = "#" + uid;
+      btnProps["hx-" + method.toLowerCase()] = `/__actions/${actionName}`;
+      btnProps["hx-swap"] = "none";
+
+      if (relatedIslands.length > 0) {
+        const islandsIDs = relatedIslands
+          .concat(islands)
+          .map((island) => IslandMap.get(island)?.id)
+          .filter(defined);
+
+        const currentPath = bldr.currentRoute.join("/");
+        btnProps["hx-headers"] = `javascript: ...${Client.call(
+          "formHeaders",
+          currentPath,
+          islandsIDs,
+          (items ?? []).map(String),
+        )}`;
+      }
+
+      return (
+        <form {...formProps} id={uid}>
+          {Object.entries(data ?? {}).map(([key, value]) => {
+            return <HiddenInput name={key} value={value} />;
+          })}
+          <button {...btnProps} />
+        </form>
+      );
+    },
+    Form(
+      { children, data, islands = [], items, ...props }: FormActionProps,
+      api: ComponentApi,
+    ) {
       if (api.ctx.has(FormContext)) {
         throw new Error("Form actions cannot be nested.");
       }
@@ -123,7 +179,7 @@ export const $action = (
           value={{
             formID: uid,
             islands: islandsIDs,
-            items: props.items,
+            items: items,
           }}
         >
           <form {...props} id={uid}>
@@ -135,7 +191,7 @@ export const $action = (
         </FormContext.Provider>
       );
     },
-    Submit: (props: SubmitActionProps, api: ComponentApi) => {
+    Submit(props: SubmitActionProps, api: ComponentApi) {
       const formCtx = api.ctx.getOrFail(FormContext);
       const bldr = api.ctx.getOrFail(builderCtx);
 
@@ -147,7 +203,7 @@ export const $action = (
 
       const btnProps: Record<string, any> = { ...props };
       btnProps["hx-include"] = "#" + uid;
-      btnProps["hx-" + method.toLowerCase()] = `/__actions/${action}`;
+      btnProps["hx-" + method.toLowerCase()] = `/__actions/${actionName}`;
       btnProps["hx-swap"] = "none";
 
       if (formCtx.islands.length > 0) {
@@ -163,4 +219,6 @@ export const $action = (
       return <button {...btnProps} />;
     },
   };
+
+  return action;
 };
