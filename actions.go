@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -197,11 +198,46 @@ func (action *action[Body]) GetName() string {
 	return action.name
 }
 
+func bindFormParams(ctx echo.Context, bodyPtr interface{}) error {
+	go (func() {
+		if r := recover(); r != nil {
+			ctx.Logger().Error("internal error binding form params: ", r)
+		}
+	})()
+
+	bodyValueElem := reflect.ValueOf(bodyPtr).Elem()
+	body := bodyValueElem.Interface()
+
+	if param, err := ctx.FormParams(); err == nil {
+		v := reflect.ValueOf(body)
+		// iterate over keys of the body struct
+		for i := 0; i < v.NumField(); i++ {
+			field := v.Field(i)
+			// only bind fields of type string
+			if field.Kind() == reflect.String {
+				fieldName := reflect.TypeOf(body).Field(i).Name
+				paramValue := param.Get(fieldName)
+				if paramValue != "" {
+					// assign the value to the
+					bodyValueElem.Field(i).SetString(paramValue)
+				}
+			}
+		}
+		return nil
+	} else {
+		return err
+	}
+}
+
 func (action *action[Body]) Perform(ctx echo.Context) error {
 	body := new(Body)
 	err := ctx.Bind(body)
 	if err != nil {
 		return echo.ErrBadRequest
+	}
+	err = bindFormParams(ctx, body)
+	if err != nil {
+		return echo.ErrInternalServerError
 	}
 	actx := &ActionContext{
 		Echo: ctx,

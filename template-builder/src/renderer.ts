@@ -1,4 +1,9 @@
-import { ComponentApi, ElementGenerator, JsxteRenderer } from "jsxte";
+import {
+  ComponentApi,
+  ElementGenerator,
+  JsxteRenderer,
+  JsxteRenderError,
+} from "jsxte";
 
 const SELF_CLOSING_TAG_LIST = [
   "area",
@@ -55,7 +60,7 @@ class BaseHtmlGenerator {
   protected generateTag(
     tag: string,
     attributes?: string,
-    content?: string
+    content?: string,
   ): string {
     if (attributes) {
       attributes = " " + attributes;
@@ -144,7 +149,7 @@ class HtmlCompactGenerator
   createElement(
     type: string,
     attributes: [attributeName: string, attributeValue: any][],
-    children: string[]
+    children: string[],
   ): Promise<string> {
     return Promise.resolve(children)
       .then((c) => Promise.all(c))
@@ -170,16 +175,24 @@ const renderer = new JsxteRenderer<string | Promise<string>>(generator, {
   allowAsync: true,
 });
 
-export const render = (element: JSX.Element, api?: ComponentApi) => {
-  if (api) {
-    const renderer = new JsxteRenderer<string | Promise<string>>(
-      generator,
-      {
-        allowAsync: true,
-      },
-      api
-    );
-    return renderer.render(element);
+export const render = async (element: JSX.Element, api?: ComponentApi) => {
+  try {
+    if (api) {
+      const renderer = new JsxteRenderer<string | Promise<string>>(
+        generator,
+        {
+          allowAsync: true,
+        },
+        api,
+      );
+      return await renderer.render(element);
+    }
+    return await renderer.render(element);
+  } catch (e) {
+    if (JsxteRenderError.is(e)) {
+      // @ts-ignore
+      e.regenerateMessage();
+    }
+    throw e;
   }
-  return renderer.render(element);
 };
