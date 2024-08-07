@@ -299,14 +299,18 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 
 				items := Array[string]{}
 				for _, itemKey := range itemKeys.ToSlice() {
-					itemNode, err := xmlquery.Query(node, fmt.Sprintf("//*[@data-item-key=\"%s\"]", itemKey))
+					itemNode, err := xmlquery.Query(
+						node, fmt.Sprintf("//div[@data-item-key=\"%s\"]", itemKey),
+					)
 					if err == nil && itemNode != nil {
-						itemHtml := utils.XmlNodeToString(itemNode)
-						items.Push(fmt.Sprintf(
-							"<div hx-swap-oob=\"innerHtml:.dynamic-list-element[data-item-key='%s']\">%s</div>",
-							itemKey,
-							itemHtml,
-						))
+						utils.XmlNodeSetAttribute(
+							itemNode,
+							"hx-swap-oob",
+							fmt.Sprintf(
+								"innerHtml:.dynamic-list-element[data-item-key='%s']", itemKey,
+							),
+						)
+						items.Push(utils.XmlNodeToString(itemNode))
 					} else {
 						items.Push(fmt.Sprintf(
 							"<div hx-swap-oob=\"delete:.dynamic-list-element[data-item-key='%s']\"></div>",

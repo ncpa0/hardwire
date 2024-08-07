@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/xml"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
@@ -19,4 +20,21 @@ func XmlNodeToString(node *xmlquery.Node) string {
 	}
 	s = strings.ReplaceAll(s, TEMPL_QUOTE, "\"")
 	return s
+}
+
+func XmlNodeClone(node *xmlquery.Node) *xmlquery.Node {
+	deref := *node
+	nodeCopy := deref
+	nodeCopy.Attr = make([]xmlquery.Attr, len(node.Attr))
+	copy(nodeCopy.Attr, node.Attr)
+	return &nodeCopy
+}
+
+func XmlNodeSetAttribute(node *xmlquery.Node, attribute string, value string) {
+	node.Attr = append(node.Attr, xmlquery.Attr{
+		Name: xml.Name{
+			Local: attribute,
+		},
+		Value: value,
+	})
 }
