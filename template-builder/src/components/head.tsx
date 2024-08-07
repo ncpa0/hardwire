@@ -2,11 +2,11 @@ import { builderCtx } from "../contexts";
 import path from "node:path";
 import { SetupClientHelpers } from "./_helpers.client";
 
-export const Head: JSXTE.Component<{
+export type HeadProps = {
   /**
    * The version of htmx to use.
    *
-   * @default "1.9.10"
+   * @default "2.0.1"
    */
   htmxVersion?: string;
   /**
@@ -15,7 +15,13 @@ export const Head: JSXTE.Component<{
    * value provided.
    */
   htmxIntegrityHash?: string;
-}> = (props, componentApi) => {
+  /**
+   * Don';t include the idiomorph htmx extension by default.
+   */
+  nomorph?: boolean;
+};
+
+export const Head: JSXTE.Component<HeadProps> = (props, componentApi) => {
   const app = componentApi.ctx.getOrFail(builderCtx);
   const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
   const htmxVer = props.htmxVersion ?? "2.0.1";
@@ -93,14 +99,26 @@ export const Head: JSXTE.Component<{
 
   return (
     <head>
+      <meta charset="utf-8" />
+      <meta http-equiv="x-ua-compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <script
         src={`https://unpkg.com/htmx.org@${htmxVer}`}
         integrity={integrity}
         crossorigin="anonymous"
       />
-      <title>{app.currentRouteTitle}</title>
-      {props.children}
+      {props.nomorph ? (
+        <></>
+      ) : (
+        <script
+          src={"https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"}
+          integrity="sha384-01awMgY2Qxoo57dFZwehcB4wqi9TunC6fiF9hpPaDsLu+ayOG+WvoatvgPWquZh8"
+          crossorigin="anonymous"
+        />
+      )}
       <script src={hwScript} />
+      {props.children}
+      <title>{app.currentRouteTitle}</title>
     </head>
   );
 };

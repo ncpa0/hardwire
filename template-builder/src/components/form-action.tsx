@@ -16,12 +16,15 @@ type BaseActionProps = {
    * of the specified key(s) will be updated.
    */
   items?: Array<string | ValueProxy<string>>;
+  morph?: boolean;
 };
 
 export type QuickActionButtonProps = JSX.IntrinsicElements["button"] &
   BaseActionProps & { formProps?: JSX.IntrinsicElements["form"] };
 export type FormActionProps = JSX.IntrinsicElements["form"] & BaseActionProps;
-export type SubmitActionProps = JSX.IntrinsicElements["button"];
+export type SubmitActionProps = JSX.IntrinsicElements["button"] & {
+  morph?: boolean;
+};
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -106,11 +109,13 @@ export const $action = (actionParams: {
    * this action is performed.
    */
   islands: JSXTE.Component<any>[];
+  morph?: boolean;
 }) => {
   const {
     method,
     action: actionName,
     islands: relatedIslands = [],
+    morph: baseMorph,
   } = actionParams;
 
   const uid = getNextFormID();
@@ -125,6 +130,7 @@ export const $action = (actionParams: {
         islands = [],
         items,
         formProps,
+        morph,
         ...props
       }: QuickActionButtonProps,
       api: ComponentApi,
@@ -148,6 +154,7 @@ export const $action = (actionParams: {
           currentPath,
           islandsIDs,
           (items ?? []).map(String),
+          morph ?? baseMorph,
         )}`;
       }
 
@@ -190,7 +197,7 @@ export const $action = (actionParams: {
         </FormContext.Provider>
       );
     },
-    Submit(props: SubmitActionProps, api: ComponentApi) {
+    Submit({ morph, ...props }: SubmitActionProps, api: ComponentApi) {
       const formCtx = api.ctx.getOrFail(FormContext);
       const bldr = api.ctx.getOrFail(builderCtx);
 
@@ -212,6 +219,7 @@ export const $action = (actionParams: {
           currentPath,
           formCtx.islands,
           (formCtx.items ?? []).map(String),
+          morph ?? baseMorph,
         )}`;
       }
 

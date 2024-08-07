@@ -4,6 +4,7 @@ export function SetupClientHelpers() {
       currentRouter: string,
       islands: string[],
       items: string[],
+      morph?: boolean,
     ) {
       let presentIslands = "";
       for (let i = 0; i < islands.length; i++) {
@@ -24,6 +25,7 @@ export function SetupClientHelpers() {
         "Hardwire-Islands-Update": presentIslands.slice(1),
         "Hardwire-Dynamic-Fragment-Request": currentRouter,
         "Hardwire-Dynamic-List-Patch": listItems.slice(1),
+        "Hardwire-Htmx-Morph": morph ? "true" : "false",
       };
     }
   }

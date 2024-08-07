@@ -16,14 +16,14 @@ const TSCONFIG_TEMPLATE = JSON.stringify(
     },
   },
   null,
-  2
+  2,
 );
 const CSS_TEMPLATE = ftmpl`
 * {
   min-width: 0;
 }
 
-body { 
+body {
   margin: unset;
   min-height: 100vh;
   min-width: 100vw;
@@ -35,31 +35,29 @@ body {
 }`;
 const INDEX_TEMPLATE = ftmpl`
 import "hardwire-html-generator";
-        
+
 export default function App() {
   return (
-    <html>
-      <Head>
-        <meta charset='utf-8' />
-        <meta http-equiv='x-ua-compatible' content='IE=edge' />
-        <meta name='viewport' content='width=device-width, initial-scale=1' />
-        <Style path="./style.css" dirname={import.meta.dir} />
-        <Script path="./index.client.ts" dirname={import.meta.dir} />
-      </Head>
-      <body>
-        <div id="root">
-          <nav>
-            <ul>
-              <li><Link href="/">Home</Link></li>
-            </ul>
-          </nav>
-          <Switch id="main-switch">
-            <StaticRoute path="home" title="Home Page">
-              <h1>Hello World</h1>
-            </StaticRoute>
-          </Switch>
-        </div>
-      </body>
+    <Html
+      headContent={(
+        <>
+          <Style dirname={import.meta.dir} path="./style.css" />
+          <Script dirname={import.meta.dir} path="./index.client.ts" />
+        </>
+      )}
+    >
+      <div id="root">
+        <nav>
+          <ul>
+            <li><Link href="/">Home</Link></li>
+          </ul>
+        </nav>
+        <Switch id="main-switch">
+          <StaticRoute path="home" title="Home Page">
+            <h1>Hello World</h1>
+          </StaticRoute>
+        </Switch>
+      </div>
     </html>
   );
 }`;

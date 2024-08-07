@@ -8,5 +8,5 @@ export function cls(
       cname += " " + name.toString().trim();
     }
   }
-  return cname;
+  return cname.slice(1);
 }

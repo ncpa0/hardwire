@@ -18,6 +18,7 @@ import { Switch } from "./router";
 import { Script } from "./script";
 import { Style } from "./style";
 import { $islandList } from "./dynamic-list";
+import { Html } from "./html";
 
 export const GLOBALS = {
   Switch,
@@ -27,6 +28,7 @@ export const GLOBALS = {
   Script,
   Style,
   Head,
+  Html,
   DynamicFragment,
   If,
   MapArray,
@@ -66,6 +68,7 @@ declare global {
   const Script: typeof GLOBALS.Script;
   const Style: typeof GLOBALS.Style;
   const Head: typeof GLOBALS.Head;
+  const Html: typeof GLOBALS.Html;
   const DynamicFragment: typeof GLOBALS.DynamicFragment;
   const If: typeof GLOBALS.If;
   const MapArray: typeof GLOBALS.MapArray;

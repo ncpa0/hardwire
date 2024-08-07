@@ -29,7 +29,7 @@ func createResponse(c echo.Context, view View) error {
 		c.Response().Header().Set("ETag", renderResult.Etag)
 	}
 
-	return c.HTML(http.StatusOK, renderResult.Html)
+	return c.HTML(http.StatusOK, "<!DOCTYPE html>\n"+renderResult.Html)
 }
 
 func createPageViewHandler(view *views.PageView, conf *config.Configuration) func(c echo.Context) error {

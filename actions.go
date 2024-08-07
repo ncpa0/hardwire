@@ -254,6 +254,12 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 	itemKeys := utils.ParseHeaderList(
 		ctx.Request().Header.Get("Hardwire-Dynamic-List-Patch"),
 	)
+	morphSwap := ctx.Request().Header.Get("Hardwire-Htmx-Morph") == "true"
+
+	swap := utils.OobSwap{}
+	if morphSwap {
+		swap.Extension = "morph"
+	}
 
 	allIslands := views.GetIslands()
 	dynFragments := views.GetDynamicFragmentViewRegistry()
@@ -285,36 +291,50 @@ func (action *action[Body]) Perform(ctx echo.Context) error {
 				return echo.ErrInternalServerError
 			}
 
+			strReader := strings.NewReader(html)
+			fragmentNode, err := xmlquery.Parse(strReader)
+			if err != nil {
+				ctx.Logger().Error("error parsing fragment output html: ", err)
+				return echo.ErrInternalServerError
+			}
+
 			if itemKeys.Length() == 0 {
-				ctx.Response().Write([]byte(fmt.Sprintf("\n<div id=\"%s\" hx-swap-oob=\"innerHtml\">%s</div>", island.ID, html)))
+				fragmentNode = xmlquery.FindOne(
+					fragmentNode, "//div[@data-frag-url]",
+				)
+
+				swap.Selector = "#" + island.ID
+				utils.XmlNodeSetAttribute(
+					fragmentNode,
+					"hx-swap-oob",
+					swap.Build(),
+				)
+				nodeHtml := utils.XmlNodeToString(fragmentNode)
+				ctx.Response().Write([]byte(nodeHtml))
 				actx.updatedIslands = append(actx.updatedIslands, islandID)
 				actx.isHandled = true
 			} else {
-				strReader := strings.NewReader(html)
-				node, err := xmlquery.Parse(strReader)
-				if err != nil {
-					ctx.Logger().Error("error parsing fragment output html: ", err)
-					return echo.ErrInternalServerError
-				}
-
 				items := Array[string]{}
 				for _, itemKey := range itemKeys.ToSlice() {
 					itemNode, err := xmlquery.Query(
-						node, fmt.Sprintf("//div[@data-item-key=\"%s\"]", itemKey),
+						fragmentNode, fmt.Sprintf("//div[@data-item-key=\"%s\"]", itemKey),
 					)
 					if err == nil && itemNode != nil {
+						swap.Selector = fmt.Sprintf(".dynamic-list-element[data-item-key='%s']", itemKey)
 						utils.XmlNodeSetAttribute(
 							itemNode,
 							"hx-swap-oob",
-							fmt.Sprintf(
-								"innerHtml:.dynamic-list-element[data-item-key='%s']", itemKey,
-							),
+							swap.Build(),
 						)
 						items.Push(utils.XmlNodeToString(itemNode))
 					} else {
+						swap := utils.OobSwap{
+							Mode:     "delete",
+							Selector: fmt.Sprintf(".dynamic-list-element[data-item-key='%s']", itemKey),
+						}
 						items.Push(fmt.Sprintf(
-							"<div hx-swap-oob=\"delete:.dynamic-list-element[data-item-key='%s']\"></div>",
-							itemKey,
+							"<div hx-swap-oob=\"%s\"></div>",
+							swap.Build(),
 						))
 					}
 				}

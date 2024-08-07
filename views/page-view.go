@@ -318,13 +318,13 @@ func (node *NodeProxy) Render(c echo.Context) (*RenderedView, error) {
 		etag = node.etag
 	}
 
-	if node.parentRoot.title != "" {
-		result := RenderedView{
-			Html: fmt.Sprintf("<title>%s</title>\n%s", node.parentRoot.title, rawHtml),
-			Etag: etag,
-		}
-		return &result, nil
-	}
+	// if node.parentRoot.title != "" {
+	// 	result := RenderedView{
+	// 		Html: fmt.Sprintf("<title>%s</title>\n%s", node.parentRoot.title, rawHtml),
+	// 		Etag: etag,
+	// 	}
+	// 	return &result, nil
+	// }
 
 	result := RenderedView{
 		Html: rawHtml,

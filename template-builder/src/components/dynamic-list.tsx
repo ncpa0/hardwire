@@ -11,6 +11,10 @@ export type DynamicListProps<T extends any[]> = {
     item: AsProxy<T[number]>,
     itemIdx: ValueProxy<string>,
   ) => JSX.Element;
+  renderWrapper?: (
+    props: JSXTE.PropsWithChildren<{}>,
+    items: ListProxy<T[number]>,
+  ) => JSX.Element;
   keyGetter?: (
     item: AsProxy<T[number]>,
     idx: ValueProxy<string>,
@@ -19,6 +23,7 @@ export type DynamicListProps<T extends any[]> = {
   itemClass?: string | ValueProxy<string>;
   fallback?: JSX.Element;
   trigger?: "load" | "revealed" | "intersect";
+  morph?: boolean;
   swap?: `${number}s` | `${number}ms`;
   settle?: `${number}s` | `${number}ms`;
   /**
@@ -39,20 +44,23 @@ export const DynamicList = async <T extends any[]>(
 
   const bldr = compApi.ctx.getOrFail(builderCtx);
   const listProxy = structProxy<T>("$frag_root") as ListProxy<T>;
+  const itemsTempl = listProxy.map((value, key) => {
+    const itemKey = getKey(value, key);
+    return (
+      <div
+        data-item-key={itemKey}
+        class={cls("dynamic-list-element", props.itemClass)}
+      >
+        {props.render(value, key)}
+      </div>
+    );
+  });
   const templ = await render(
     <dynamic-fragment class={cls("dynamic-list", props.class)}>
       {`{{$frag_root := .}}`}
-      {listProxy.map((value, key) => {
-        const itemKey = getKey(value, key);
-        return (
-          <div
-            data-item-key={itemKey}
-            class={cls("dynamic-list-element", props.itemClass)}
-          >
-            {props.render(value, key)}
-          </div>
-        );
-      })}
+      {props.renderWrapper
+        ? props.renderWrapper({ children: itemsTempl }, listProxy)
+        : itemsTempl}
     </dynamic-fragment>,
     compApi,
   );
@@ -76,7 +84,7 @@ export const DynamicList = async <T extends any[]>(
       break;
   }
 
-  let hxswap = "outerHTML";
+  let hxswap = props.morph ? "morph:outerHTML" : "outerHTML";
 
   if (props.swap) {
     hxswap += " swap:" + props.swap;
@@ -108,10 +116,14 @@ export const DynamicList = async <T extends any[]>(
 
 export function $islandList<T extends any[], P extends object = {}>(
   options: Omit<DynamicListProps<T>, "render"> & { id: string },
-  Component: (
+  ItemComponent: (
     props: P,
     item: AsProxy<T[number]>,
     itemIdx: ValueProxy<string>,
+  ) => JSX.Element,
+  WrapperComponent?: (
+    props: JSXTE.PropsWithChildren<{}>,
+    items: ListProxy<T[number]>,
   ) => JSX.Element,
 ): JSXTE.Component<P> {
   const { id, ...dynamicFragmentProps } = options;
@@ -128,8 +140,9 @@ export function $islandList<T extends any[], P extends object = {}>(
         <DynamicList<T>
           {...dynamicFragmentProps}
           render={(item, itemIdx) => {
-            return Component(props, item, itemIdx);
+            return ItemComponent(props, item, itemIdx);
           }}
+          renderWrapper={WrapperComponent}
           // @ts-expect-error
           __fragidgetter={(id: string) => {
             islandEntry.fragmentID = id;

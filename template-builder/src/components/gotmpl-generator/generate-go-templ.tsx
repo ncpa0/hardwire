@@ -35,7 +35,7 @@ export const structProxy = <T,>(name: string): AsProxy<T> => {
   const o = {
     name,
     get length() {
-      return valueProxy(`len ${name}`);
+      return valueProxy(`(len ${name})`);
     },
     varname() {
       return name;

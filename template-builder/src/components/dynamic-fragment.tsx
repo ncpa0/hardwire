@@ -20,6 +20,7 @@ export type DynamicFragmentProps<T> = {
   class?: string;
   fallback?: JSX.Element;
   trigger?: "load" | "revealed" | "intersect";
+  morph?: boolean;
   swap?: `${number}s` | `${number}ms`;
   settle?: `${number}s` | `${number}ms`;
   /**
@@ -60,7 +61,7 @@ export const DynamicFragment = async <T,>(
       break;
   }
 
-  let hxswap = "outerHTML";
+  let hxswap = props.morph ? "morph:outerHTML" : "outerHTML";
 
   if (props.swap) {
     hxswap += " swap:" + props.swap;
