@@ -13,6 +13,7 @@ import (
 type Island struct {
 	ID         string
 	FragmentID string
+	Type       string
 }
 
 var islandsList = &Array[*Island]{}
@@ -35,6 +36,7 @@ func loadIslands(wd string) error {
 				if err != nil {
 					return err
 				}
+				validateIslandType(island.Type)
 				islandsList.Push(&island)
 			}
 		}
@@ -43,4 +45,13 @@ func loadIslands(wd string) error {
 	})
 
 	return err
+}
+
+func validateIslandType(itype string) {
+	switch itype {
+	case "basic":
+	case "list":
+	default:
+		panic("Invalid island type")
+	}
 }

@@ -19,11 +19,14 @@
     "adwavecss": "~0.0.10",
     "adwaveui": "~0.0.3",
     "bun-types": "latest",
+    "htmx.org": "^1.9.12",
     "typescript": "latest"
   },
   "peerDependencies": {},
   "dependencies": {
     "esbuild": "^0.20.1",
+    "htmx.ext...chunked-transfer": "^1.0.4",
+    "idiomorph": "^0.3.0",
     "jsxte": "~3.3.1",
     "lightningcss": "^1.26.0",
     "minimist": "~1.2.8",

@@ -15,10 +15,7 @@ export type HeadProps = {
    * value provided.
    */
   htmxIntegrityHash?: string;
-  /**
-   * Don';t include the idiomorph htmx extension by default.
-   */
-  nomorph?: boolean;
+  extensions?: string[];
 };
 
 export const Head: JSXTE.Component<HeadProps> = (props, componentApi) => {
@@ -91,7 +88,7 @@ export const Head: JSXTE.Component<HeadProps> = (props, componentApi) => {
   }
 
   const hwScript = extFiles.register(
-    `(${String(SetupClientHelpers)})()`,
+    `(${String(SetupClientHelpers)})(${JSON.stringify(props.extensions ?? [])})`,
     "hardwire",
     "js",
     { keepName: true },
@@ -107,15 +104,18 @@ export const Head: JSXTE.Component<HeadProps> = (props, componentApi) => {
         integrity={integrity}
         crossorigin="anonymous"
       />
-      {props.nomorph ? (
-        <></>
-      ) : (
-        <script
-          src={"https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"}
-          integrity="sha384-01awMgY2Qxoo57dFZwehcB4wqi9TunC6fiF9hpPaDsLu+ayOG+WvoatvgPWquZh8"
-          crossorigin="anonymous"
-        />
-      )}
+      {props.extensions?.map((ext) => {
+        switch (ext) {
+          case "chunked-transfer": {
+            return <Script package="htmx.ext...chunked-transfer" />;
+            break;
+          }
+          case "morph": {
+            return <Script package="idiomorph" />;
+            break;
+          }
+        }
+      })}
       <script src={hwScript} />
       {props.children}
       <title>{app.currentRouteTitle}</title>

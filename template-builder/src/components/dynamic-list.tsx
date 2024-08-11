@@ -19,6 +19,7 @@ export type DynamicListProps<T extends any[]> = {
     item: AsProxy<T[number]>,
     idx: ValueProxy<string>,
   ) => string | ValueProxy<string>;
+  id?: string;
   class?: string | ValueProxy<string>;
   itemClass?: string | ValueProxy<string>;
   fallback?: JSX.Element;
@@ -56,7 +57,7 @@ export const DynamicList = async <T extends any[]>(
     );
   });
   const templ = await render(
-    <dynamic-fragment class={cls("dynamic-list", props.class)}>
+    <dynamic-fragment id={props.id} class={cls("dynamic-list", props.class)}>
       {`{{$frag_root := .}}`}
       {props.renderWrapper
         ? props.renderWrapper({ children: itemsTempl }, listProxy)
@@ -132,23 +133,24 @@ export function $islandList<T extends any[], P extends object = {}>(
     id,
     fragmentID: "",
     type: "list",
+    resource: dynamicFragmentProps.require,
   };
 
   const island: JSXTE.Component<P> = (props) => {
     return (
-      <div id={id}>
-        <DynamicList<T>
-          {...dynamicFragmentProps}
-          render={(item, itemIdx) => {
-            return ItemComponent(props, item, itemIdx);
-          }}
-          renderWrapper={WrapperComponent}
-          // @ts-expect-error
-          __fragidgetter={(id: string) => {
-            islandEntry.fragmentID = id;
-          }}
-        />
-      </div>
+      <DynamicList<T>
+        id={id}
+        class={`island_${id}`}
+        {...dynamicFragmentProps}
+        render={(item, itemIdx) => {
+          return ItemComponent(props, item, itemIdx);
+        }}
+        renderWrapper={WrapperComponent}
+        // @ts-expect-error
+        __fragidgetter={(id: string) => {
+          islandEntry.fragmentID = id;
+        }}
+      />
     );
   };
 

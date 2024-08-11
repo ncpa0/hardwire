@@ -60,10 +60,6 @@ func NewDynamicFragmentView(root string, filepath string) (*DynamicFragmentView,
 	addClass(dynamicFragment, "__dynamic_fragment")
 	rawHtml := utils.XmlNodeToString(dynamicFragment)
 
-	if err != nil {
-		return nil, err
-	}
-
 	templ, err := template.New(filepath).Parse(rawHtml)
 
 	if err != nil {
@@ -88,8 +84,8 @@ func (v *DynamicFragmentView) GetRoutePathname() string {
 	return v.routePathname
 }
 
-func (v *DynamicFragmentView) GetResourceName() string {
-	return v.requiredResource
+func (v *DynamicFragmentView) ResourceKeys() []string {
+	return []string{v.requiredResource}
 }
 
 func (v *DynamicFragmentView) MatchesRoute(routePathname string) bool {
@@ -109,9 +105,9 @@ func (v *DynamicFragmentView) MatchesRoute(routePathname string) bool {
 	return false
 }
 
-func (v *DynamicFragmentView) Build(resource interface{}) (string, error) {
+func (v *DynamicFragmentView) Build(resources ...interface{}) (string, error) {
 	var buff bytes.Buffer
-	err := v.template.Execute(&buff, resource)
+	err := v.template.Execute(&buff, resources[0])
 	if err != nil {
 		return "", err
 	}

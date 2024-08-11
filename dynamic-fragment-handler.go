@@ -1,21 +1,21 @@
 package hardwire
 
 import (
-	"errors"
 	"net/http"
 
 	echo "github.com/labstack/echo/v4"
 	config "github.com/ncpa0/hardwire/configuration"
-	resources "github.com/ncpa0/hardwire/resource-provider"
+	resources "github.com/ncpa0/hardwire/resources"
 	"github.com/ncpa0/hardwire/utils"
 	"github.com/ncpa0/hardwire/views"
 )
 
 func createDynamicFragmentHandler(view *views.DynamicFragmentView, conf *config.Configuration) func(c echo.Context) error {
 	return func(c echo.Context) error {
-		provider := resources.Provider.Find(view.GetResourceName())
+		resKey := view.ResourceKeys()[0]
+		isValidResource := resources.HasResource(resKey)
 
-		if provider.IsNil() {
+		if !isValidResource {
 			err := c.NoContent(http.StatusNotFound)
 			if err != nil {
 				return err
@@ -41,13 +41,13 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView, conf *config.
 		hxCurrentUrl := c.Request().Header.Get("Hx-Current-Url")
 		params := utils.ParseUrlParams(routePathname, hxCurrentUrl)
 
-		requestContext := resources.NewDynamicRequestContext(
-			c,
-			params,
-			routePathname,
-		)
+		handler, err := HardwireContext.GetResourceHandler(c, resKey)
+		if err != nil {
+			return err
+		}
 
-		resource, err := provider.Get().Handle(requestContext)
+		resource, err := handler(routePathname, params)
+
 		if err != nil {
 			err := utils.HandleError(c, err)
 			if err != nil {
@@ -117,41 +117,4 @@ func createDynamicFragmentHandler(view *views.DynamicFragmentView, conf *config.
 		}
 		return nil
 	}
-}
-
-func buildFragment(fragment *views.DynamicFragmentView, c echo.Context) (string, error) {
-	provider := resources.Provider.Find(fragment.GetResourceName())
-
-	if provider.IsNil() {
-		return "", errors.New("resource not found")
-	}
-
-	routePathname := c.Request().Header.Get("Hardwire-Dynamic-Fragment-Request")
-	if routePathname == "" {
-		return "", errors.New("bad request")
-	}
-
-	hxCurrentUrl := c.Request().Header.Get("Hx-Current-Url")
-	params := utils.ParseUrlParams(routePathname, hxCurrentUrl)
-
-	requestContext := resources.NewDynamicRequestContext(
-		c,
-		params,
-		routePathname,
-	)
-
-	resource, err := provider.Get().Handle(requestContext)
-	if err != nil {
-		return "", err
-	}
-	if resource == nil {
-		return "", errors.New("resource not found")
-	}
-
-	html, err := fragment.Build(resource)
-	if err != nil {
-		return "", err
-	}
-
-	return html, nil
 }

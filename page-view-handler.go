@@ -5,17 +5,18 @@ import (
 
 	echo "github.com/labstack/echo/v4"
 	config "github.com/ncpa0/hardwire/configuration"
+	hw "github.com/ncpa0/hardwire/hw-context"
 	"github.com/ncpa0/hardwire/utils"
 	"github.com/ncpa0/hardwire/views"
 )
 
 type View interface {
-	Render(c echo.Context) (*views.RenderedView, error)
+	Render(hwContext hw.HardwireContext, c echo.Context) (*views.RenderedView, error)
 }
 
 func createResponse(c echo.Context, view View) error {
 	ifNoneMatch := c.Request().Header.Get("If-None-Match")
-	renderResult, err := view.Render(c)
+	renderResult, err := view.Render(HardwireContext, c)
 
 	if err != nil {
 		return utils.HandleError(c, err)

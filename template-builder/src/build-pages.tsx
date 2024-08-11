@@ -1,6 +1,7 @@
 import path from "node:path";
 import { collectRoutes } from "./collect-routes";
 import {
+  ActionDefinition,
   RegisterExternalFileOptions,
   RouteMetaContext,
   builderCtx,
@@ -110,6 +111,12 @@ export const buildPages = async (
     return file?.url;
   };
 
+  const actions: Array<ActionDefinition> = [];
+
+  const registerAction = (action: ActionDefinition) => {
+    actions.push(action);
+  };
+
   console.log("Building pages...");
 
   const pages: Array<Page> = [];
@@ -155,6 +162,7 @@ export const buildPages = async (
               addRouter: noop,
               registerDynamicFragment,
               registerRouteDynamicResource,
+              registerAction,
             }}
           >
             {tree}
@@ -179,5 +187,5 @@ export const buildPages = async (
     pages.push(page);
   }
 
-  return { pages, assets, dynamicFragments };
+  return { pages, assets, dynamicFragments, actions };
 };

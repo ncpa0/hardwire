@@ -37,12 +37,14 @@ export type ScriptProps = ScriptPropsBase &
         children?: never;
         embed?: never;
         dirname: string;
+        inline?: boolean;
       }
     | {
         path?: never;
         package: string;
         children?: never;
         embed?: never;
+        inline?: boolean;
       }
     | {
         path?: never;
@@ -52,12 +54,13 @@ export type ScriptProps = ScriptPropsBase &
          */
         embed: true;
         children?: JSXTE.TextNodeElement | JSXTE.TextNodeElement[];
+        inline?: boolean;
       }
   );
 
 export const Script = async (
   props: ScriptProps,
-  componentApi: ComponentApi
+  componentApi: ComponentApi,
 ) => {
   const extFiles = componentApi.ctx.getOrFail(ExtFilesCtx);
   const builder = componentApi.ctx.getOrFail(builderCtx);
@@ -66,7 +69,7 @@ export const Script = async (
     return null;
   }
 
-  const { type = "module", onLoad = () => {}, buildOptions } = props;
+  const { type, onLoad = () => {}, buildOptions } = props;
 
   let name: string = "";
   if (props.package) {
@@ -101,14 +104,14 @@ export const Script = async (
     config.entrypoints = [modulePath];
   } else if (props.embed && props.children) {
     const tmpdir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "template-builder-js")
+      path.join(os.tmpdir(), "template-builder-js"),
     );
     const tmpFile = path.join(tmpdir, `${generateRandomName()}.ts`);
     await Bun.write(
       tmpFile,
       Array.isArray(props.children)
         ? props.children.map((n) => n.text).join("\n")
-        : props.children.text
+        : props.children.text,
     );
     console.debug(props.children);
     config.entrypoints = [tmpFile];
@@ -134,6 +137,14 @@ export const Script = async (
   const tmp = onLoad(contents);
   if (tmp) {
     contents = tmp;
+  }
+
+  if (props.inline) {
+    return (
+      <script type={type === "module" ? "module" : "text/javascript"}>
+        {contents}
+      </script>
+    );
   }
 
   const src = extFiles.register(contents, name, "js");

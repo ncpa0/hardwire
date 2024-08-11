@@ -3,6 +3,7 @@ import { builderCtx } from "../contexts";
 import { defined } from "../utils/defined";
 import { IslandMap } from "./island";
 import { Client } from "./_helpers.client";
+import { arrDedup } from "../utils/arr-dedup";
 
 type BaseActionProps = {
   data?: Record<string, string | number | boolean | ValueProxy<any>>;
@@ -84,6 +85,32 @@ function getNextFormID() {
   return `form_${i++}`;
 }
 
+function registerAction(
+  api: ComponentApi,
+  params: ActionParams,
+  islands: string[],
+) {
+  const builder = api.ctx.getOrFail(builderCtx);
+  builder.registerAction({
+    resource: params.resource,
+    method: params.method,
+    action: params.action,
+    islandIDs: islands,
+  });
+}
+
+type ActionParams = {
+  resource: string;
+  method: HttpMethod;
+  action: string;
+  /**
+   * List of island components that should be updated on the page whenver
+   * this action is performed.
+   */
+  islands?: JSXTE.Component<any>[];
+  morph?: boolean;
+};
+
 /**
  * @param method - The HTTP method to use for the form submission
  * @param action - The action name to trigger on the server
@@ -101,22 +128,25 @@ function getNextFormID() {
  * // clicking the submit, will send a POST request that will trigger
  * // the "create-article" action that's registered on the server.
  */
-export const $action = (actionParams: {
-  method: HttpMethod;
-  action: string;
-  /**
-   * List of island components that should be updated on the page whenver
-   * this action is performed.
-   */
-  islands: JSXTE.Component<any>[];
-  morph?: boolean;
-}) => {
+export const $action = (actionParams: ActionParams) => {
   const {
+    resource,
     method,
     action: actionName,
     islands: relatedIslands = [],
     morph: baseMorph,
   } = actionParams;
+
+  const knownDependantIslands = Array.from(IslandMap.values()).filter(
+    (island) => island.resource === resource,
+  );
+
+  const baseIslandIDs = arrDedup(
+    relatedIslands
+      .map((island) => IslandMap.get(island)?.id)
+      .concat(knownDependantIslands.map((island) => island.id))
+      .filter(defined),
+  );
 
   const uid = getNextFormID();
 
@@ -139,15 +169,16 @@ export const $action = (actionParams: {
 
       const btnProps: Record<string, any> = { ...props };
       btnProps["hx-include"] = "#" + uid;
-      btnProps["hx-" + method.toLowerCase()] = `/__actions/${actionName}`;
+      btnProps["hx-" + method.toLowerCase()] =
+        `/__resources/${resource}/actions/${actionName}`;
       btnProps["hx-swap"] = "none";
 
-      if (relatedIslands.length > 0) {
-        const islandsIDs = relatedIslands
-          .concat(islands)
-          .map((island) => IslandMap.get(island)?.id)
-          .filter(defined);
-
+      let islandsIDs = arrDedup(
+        baseIslandIDs.concat(
+          islands.map((island) => IslandMap.get(island)?.id).filter(defined),
+        ),
+      );
+      if (islandsIDs.length > 0) {
         const currentPath = bldr.currentRoute.join("/");
         btnProps["hx-headers"] = `javascript: ...${Client.call(
           "formHeaders",
@@ -157,6 +188,8 @@ export const $action = (actionParams: {
           morph ?? baseMorph,
         )}`;
       }
+
+      registerAction(api, actionParams, islandsIDs);
 
       return (
         <form {...formProps} id={uid}>
@@ -175,10 +208,13 @@ export const $action = (actionParams: {
         throw new Error("Form actions cannot be nested.");
       }
 
-      const islandsIDs = relatedIslands
-        .concat(islands)
-        .map((island) => IslandMap.get(island)?.id)
-        .filter(defined);
+      const islandsIDs = arrDedup(
+        baseIslandIDs.concat(
+          islands.map((island) => IslandMap.get(island)?.id).filter(defined),
+        ),
+      );
+
+      registerAction(api, actionParams, islandsIDs);
 
       return (
         <FormContext.Provider
@@ -209,7 +245,8 @@ export const $action = (actionParams: {
 
       const btnProps: Record<string, any> = { ...props };
       btnProps["hx-include"] = "#" + uid;
-      btnProps["hx-" + method.toLowerCase()] = `/__actions/${actionName}`;
+      btnProps["hx-" + method.toLowerCase()] =
+        `/__resources/${resource}/actions/${actionName}`;
       btnProps["hx-swap"] = "none";
 
       if (formCtx.islands.length > 0) {

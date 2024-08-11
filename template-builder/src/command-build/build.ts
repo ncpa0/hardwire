@@ -16,11 +16,15 @@ type FragmentMetadata = {
   hash: string;
 };
 
+function toJson(obj: any) {
+  return JSON.stringify(obj, null, 2);
+}
+
 export async function buildCmd(
   srcFile: string,
   outDir: string,
   staticDir: string,
-  staticurl: string
+  staticurl: string,
 ) {
   const { buildPages } = await import("../build-pages");
   const { registerGlobalFunctions } = await import("../components");
@@ -35,10 +39,10 @@ export async function buildCmd(
 
   const App = mod.default;
 
-  const { pages, dynamicFragments, assets } = await buildPages(
+  const { pages, dynamicFragments, assets, actions } = await buildPages(
     path.dirname(srcFile),
     createElement(App),
-    staticurl
+    staticurl,
   );
 
   console.log("Saving results to filesystem...");
@@ -63,7 +67,7 @@ export async function buildCmd(
 
       await fs.mkdir(basedir, { recursive: true });
       await Bun.write(outfilePath, page.html);
-      await Bun.write(metaFilePath, JSON.stringify(meta));
+      await Bun.write(metaFilePath, toJson(meta));
     }),
     ...assets.map(async (asset) => {
       const outfilePath = path.join(staticDir, asset.outFile);
@@ -82,13 +86,18 @@ export async function buildCmd(
       const metaFile = path.join(outDir, "__dyn", frag.hash) + ".meta.json";
 
       await Bun.write(outfilePath, frag.contents);
-      await Bun.write(metaFile, JSON.stringify(meta));
+      await Bun.write(metaFile, toJson(meta));
     }),
     ...Array.from(IslandMap.entries()).map((entry) => {
-      const [, { id, fragmentID }] = entry;
-      const outfilePath = path.join(outDir, "__islands", id) + ".meta.json";
-      return Bun.write(outfilePath, JSON.stringify({ id, fragmentID }));
+      const [, islandDef] = entry;
+      const outfilePath =
+        path.join(outDir, "__islands", islandDef.id) + ".meta.json";
+      return Bun.write(outfilePath, toJson(islandDef));
     }),
+    Bun.write(
+      path.join(outDir, "__actions.meta.json"),
+      toJson({ registeredActions: actions }),
+    ),
   ]);
 
   console.log("Done.");

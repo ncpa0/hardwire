@@ -41,6 +41,7 @@ export const StaticRoute = (
           addRouter: app.addRouter,
           registerDynamicFragment: app.registerDynamicFragment,
           registerRouteDynamicResource: app.registerRouteDynamicResource,
+          registerAction: app.registerAction,
         }}
       >
         {props.children}
@@ -93,6 +94,7 @@ export const DynamicRoute = <T,>(
           addRouter: app.addRouter,
           registerDynamicFragment: app.registerDynamicFragment,
           registerRouteDynamicResource: app.registerRouteDynamicResource,
+          registerAction: app.registerAction,
         }}
       >
         {`{{$root${depth} := .${resourceKey}}}`}

@@ -7,20 +7,23 @@ import (
 
 	echo "github.com/labstack/echo/v4"
 	config "github.com/ncpa0/hardwire/configuration"
-	resources "github.com/ncpa0/hardwire/resource-provider"
+	hw "github.com/ncpa0/hardwire/hw-context"
+	resources "github.com/ncpa0/hardwire/resources"
 	servestatic "github.com/ncpa0/hardwire/serve-static"
 	"github.com/ncpa0/hardwire/views"
 )
 
 type DynamicRequestContext = resources.DynamicRequestContext
 type ResourceRequestError = resources.ResourceRequestError
-type DRProvider = resources.DRProvider
+type ResourceRegistry = resources.ResourceRegistry
+type ActionContext = resources.ActionContext
 type Configuration = config.Configuration
 type CachingConfig = config.CachingConfig
 type CachingPolicy = config.CachingPolicy
 
-var ResourceProvider = resources.Provider
+var ResourceReg = resources.ResourceReg
 var Configure = config.Configure
+var HardwireContext hw.HardwireContext = &HwContext{}
 
 func redirectHandler(to string) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
@@ -30,9 +33,9 @@ func redirectHandler(to string) echo.HandlerFunc {
 
 func validateResourcesAvailable(resource []string) error {
 	for _, resKey := range resource {
-		r := ResourceProvider.Find(resKey)
+		_, found := resources.GetResource(resKey)
 
-		if r.IsNil() {
+		if !found {
 			return fmt.Errorf("'%s' resource doesn't have a provider registered", resKey)
 		}
 	}
@@ -41,7 +44,7 @@ func validateResourcesAvailable(resource []string) error {
 }
 
 // Builds the HTML and templates for all pages and adds the routes to the server
-func Start(server *echo.Echo) error {
+func UseWith(server *echo.Echo) error {
 	pageViewRegistry := views.GetPageViewRegistry()
 	dynamicFragmentViewRegistry := views.GetDynamicFragmentViewRegistry()
 
@@ -54,6 +57,8 @@ func Start(server *echo.Echo) error {
 	if err != nil {
 		return err
 	}
+
+	resources.ValidateActionEndpoints()
 
 	err = pageViewRegistry.ForEach(func(view *views.PageView) error {
 		fmt.Printf("Adding new route: %s\n", view.GetRoutePathname())
@@ -81,7 +86,8 @@ func Start(server *echo.Echo) error {
 			fmt.Printf("Adding new dynamic fragment under route: %s\n", view.GetRoutePathname())
 		}
 
-		err := validateResourcesAvailable([]string{view.GetResourceName()})
+		resKey := view.ResourceKeys()[0]
+		err := validateResourcesAvailable([]string{resKey})
 		if err != nil {
 			return err
 		}
@@ -97,7 +103,7 @@ func Start(server *echo.Echo) error {
 		return err
 	}
 
-	registerActionHandlers(server)
+	resources.MountActionEndpoints(HardwireContext, server)
 
 	if config.Current.DebugMode {
 		fmt.Printf(

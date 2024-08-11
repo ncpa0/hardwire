@@ -85,6 +85,7 @@ export const collectRoutes = async (
           addRouter,
           registerDynamicFragment: () => ({ id: "", url: "" }),
           registerRouteDynamicResource: (r) => [capitalize(r), 1],
+          registerAction: () => {},
         }}
       >
         {tree}

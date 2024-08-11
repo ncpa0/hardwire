@@ -1,5 +1,12 @@
 import { ContextDefinition, defineContext } from "jsxte";
 
+export type ActionDefinition = {
+  resource: string;
+  action: string;
+  method: string;
+  islandIDs: string[];
+};
+
 export const builderCtx = defineContext<{
   staticUrl: string;
   isBuildPhase: boolean;
@@ -15,6 +22,7 @@ export const builderCtx = defineContext<{
     templ: string,
   ): { id: string; url: string };
   registerRouteDynamicResource(require: string): [key: string, deepth: number];
+  registerAction(action: ActionDefinition): void;
 }>();
 
 export const routerCtx = defineContext<{ containerID: string }>();

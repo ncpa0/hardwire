@@ -3,7 +3,6 @@ package views
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -12,7 +11,9 @@ import (
 	"github.com/antchfx/xmlquery"
 	echo "github.com/labstack/echo/v4"
 	"github.com/ncpa0/hardwire/configuration"
-	resources "github.com/ncpa0/hardwire/resource-provider"
+	. "github.com/ncpa0/hardwire/hw-context"
+
+	// resources "github.com/ncpa0/hardwire/resource-provider"
 	"github.com/ncpa0/hardwire/utils"
 	. "github.com/ncpa0cpl/convenient-structures"
 )
@@ -255,21 +256,11 @@ type RenderedView struct {
 	Etag string
 }
 
-func (v *PageView) Render(c echo.Context) (*RenderedView, error) {
-	return v.document.Render(c)
+func (v *PageView) Render(hw HardwireContext, c echo.Context) (*RenderedView, error) {
+	return v.document.Render(hw, c)
 }
 
-func paramMap(c echo.Context) map[string]string {
-	params := make(map[string]string)
-
-	for _, param := range c.ParamNames() {
-		params[param] = c.Param(param)
-	}
-
-	return params
-}
-
-func (node *NodeProxy) Render(c echo.Context) (*RenderedView, error) {
+func (node *NodeProxy) Render(hw HardwireContext, c echo.Context) (*RenderedView, error) {
 	var rawHtml string
 	var etag string
 
@@ -280,19 +271,11 @@ func (node *NodeProxy) Render(c echo.Context) (*RenderedView, error) {
 		for !resIterator.Done() {
 			entry, _ := resIterator.Next()
 
-			handler := resources.Provider.Find(entry.Value)
-			if handler.IsNil() {
-				c.String(404, "resource not found")
-				return nil, fmt.Errorf("resource not found: '%s'", entry.Value)
+			handler, err := hw.GetResourceHandler(c, entry.Value)
+			if err != nil {
+				return nil, err
 			}
-
-			requestContext := resources.NewDynamicRequestContext(
-				c,
-				paramMap(c),
-				node.parentRoot.routePathname,
-			)
-
-			resourceValue, err := handler.Get().Handle(requestContext)
+			resourceValue, err := handler(node.parentRoot.routePathname, utils.ParamMap(c))
 			if err != nil {
 				return nil, err
 			}
@@ -317,14 +300,6 @@ func (node *NodeProxy) Render(c echo.Context) (*RenderedView, error) {
 		rawHtml = node.raw
 		etag = node.etag
 	}
-
-	// if node.parentRoot.title != "" {
-	// 	result := RenderedView{
-	// 		Html: fmt.Sprintf("<title>%s</title>\n%s", node.parentRoot.title, rawHtml),
-	// 		Etag: etag,
-	// 	}
-	// 	return &result, nil
-	// }
 
 	result := RenderedView{
 		Html: rawHtml,

@@ -17,6 +17,7 @@ declare global {
 export type DynamicFragmentProps<T> = {
   require: string;
   render: (data: AsProxy<T>) => JSX.Element;
+  id?: string;
   class?: string;
   fallback?: JSX.Element;
   trigger?: "load" | "revealed" | "intersect";
@@ -35,7 +36,7 @@ export const DynamicFragment = async <T,>(
 ) => {
   const bldr = compApi.ctx.getOrFail(builderCtx);
   const templ = await render(
-    <dynamic-fragment class={props.class}>
+    <dynamic-fragment id={props.id} class={props.class}>
       {`{{$frag_root := .}}`}
       {props.render(structProxy("$frag_root"))}
     </dynamic-fragment>,
@@ -61,7 +62,7 @@ export const DynamicFragment = async <T,>(
       break;
   }
 
-  let hxswap = props.morph ? "morph:outerHTML" : "outerHTML";
+  let hxswap = props.morph ? "morph:innerHTML" : "innerHTML";
 
   if (props.swap) {
     hxswap += " swap:" + props.swap;
