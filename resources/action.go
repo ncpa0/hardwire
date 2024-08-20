@@ -176,6 +176,14 @@ func (action *Action) Perform(hwContext hw.HardwireContext, ctx echo.Context) er
 		return Contains(islandIDs, island.ID) && !Contains(NewArray(actx.updatedIslands), island.ID)
 	})
 
+	if islandsToUpdate.Length() == 0 {
+		if !actx.wasResponseWritten {
+			return ctx.NoContent(http.StatusNoContent)
+		}
+
+		return nil
+	}
+
 	dynFragments := views.GetDynamicFragmentViewRegistry()
 	qis := MapTo(islandsToUpdate, func(island *views.Island) *QueuedIsland {
 		fragment := dynFragments.GetFragmentById(island.FragmentID).Get()
@@ -265,7 +273,7 @@ func (action *Action) Perform(hwContext hw.HardwireContext, ctx echo.Context) er
 		return res.Err.Error()
 	})
 
-	allFailed := results.Every(func(res Promise.AwaitAllResult[interface{}], i int) bool {
+	allFailed := results.Length() > 0 && results.Every(func(res Promise.AwaitAllResult[interface{}], i int) bool {
 		return res.Err != nil
 	})
 

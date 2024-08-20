@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/antchfx/xmlquery v1.3.18
 	github.com/labstack/echo/v4 v4.11.4
-	github.com/ncpa0cpl/ezs v0.0.0-20240814171049-7b5eb41ba2ae
+	github.com/ncpa0cpl/ezs v0.0.0-20240820121929-027cf61ab5c1
 	github.com/ncpa0cpl/go_promise v0.0.0-20230929140052-08616f2b7968
 	github.com/stretchr/testify v1.8.4
 )
