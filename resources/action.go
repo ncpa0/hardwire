@@ -2,18 +2,14 @@ package resourceprovider
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 
-	"github.com/antchfx/xmlquery"
 	echo "github.com/labstack/echo/v4"
 	hw "github.com/ncpa0/hardwire/hw-context"
 	"github.com/ncpa0/hardwire/utils"
 	"github.com/ncpa0/hardwire/views"
 	. "github.com/ncpa0cpl/ezs"
-	Promise "github.com/ncpa0cpl/go_promise"
 )
 
 type AtomicRespWriter struct {
@@ -21,16 +17,20 @@ type AtomicRespWriter struct {
 	mutex     *sync.Mutex
 }
 
-func (arw *AtomicRespWriter) SendIslandUpdate(islandID string, data []byte) {
+func (arw *AtomicRespWriter) Write(islandID string, data []byte) error {
 	arw.mutex.Lock()
 	defer arw.mutex.Unlock()
 
 	utils.SetChunkedEnc(arw.actionCtx.Echo)
 	resp := arw.actionCtx.Echo.Response()
-	resp.Write(data)
+	_, err := resp.Write(data)
+	if err != nil {
+		return err
+	}
 	resp.Flush()
 	arw.actionCtx.updatedIslands = append(arw.actionCtx.updatedIslands, islandID)
 	arw.actionCtx.wasResponseWritten = true
+	return nil
 }
 
 type QueuedIsland struct {
@@ -107,70 +107,6 @@ func (action *Action) Perform(hwContext hw.HardwireContext, ctx echo.Context) er
 		mutex:     &sync.Mutex{},
 	}
 
-	sendFragmentUpdate := func(island *views.Island, html string) error {
-		swap := utils.OobSwap{}
-		if morphSwap {
-			swap.Extension = "morph"
-		}
-
-		strReader := strings.NewReader(html)
-		fragmentNode, err := xmlquery.Parse(strReader)
-		if err != nil {
-			ctx.Logger().Error("error parsing fragment output html: ", err)
-			return echo.ErrInternalServerError
-		}
-
-		if itemKeys.Length() == 0 || island.Type != "list" {
-			fragmentNode = xmlquery.FindOne(
-				fragmentNode, "//div[@data-frag-url]",
-			)
-
-			swap.Selector = "#" + island.ID
-			utils.XmlNodeSetAttribute(
-				fragmentNode,
-				"hx-swap-oob",
-				swap.Build(),
-			)
-			nodeHtml := utils.XmlNodeToString(fragmentNode)
-
-			atomicWriter.SendIslandUpdate(island.ID, []byte(nodeHtml))
-		} else {
-			items := NewArray([]string{})
-			for itemKey := range itemKeys.Iter() {
-				itemNode, err := xmlquery.Query(
-					fragmentNode, fmt.Sprintf("//div[@data-item-key=\"%s\"]", itemKey),
-				)
-				if err == nil && itemNode != nil {
-					swap.Selector = fmt.Sprintf(
-						".island_%s .dynamic-list-element[data-item-key='%s']",
-						island.ID, itemKey,
-					)
-					utils.XmlNodeSetAttribute(
-						itemNode,
-						"hx-swap-oob",
-						swap.Build(),
-					)
-					items.Push(utils.XmlNodeToString(itemNode))
-				} else {
-					swap := utils.OobSwap{
-						Mode: "delete",
-						Selector: fmt.Sprintf(
-							".island_%s .dynamic-list-element[data-item-key='%s']",
-							island.ID, itemKey,
-						),
-					}
-					items.Push(fmt.Sprintf(
-						"<div hx-swap-oob=\"%s\"></div>",
-						swap.Build(),
-					))
-				}
-			}
-			atomicWriter.SendIslandUpdate(island.ID, []byte("\n"+strings.Join(items.ToSlice(), "\n")))
-		}
-
-		return nil
-	}
-
 	allIslands := views.GetIslands()
 	islandsToUpdate := allIslands.Filter(func(island *views.Island, i int) bool {
 		return Contains(islandIDs, island.ID) && !Contains(NewArray(actx.updatedIslands), island.ID)
@@ -185,7 +121,7 @@ func (action *Action) Perform(hwContext hw.HardwireContext, ctx echo.Context) er
 	}
 
 	dynFragments := views.GetDynamicFragmentViewRegistry()
-	qis := MapTo(islandsToUpdate, func(island *views.Island) *QueuedIsland {
+	queuedIslands := MapTo(islandsToUpdate, func(island *views.Island) *QueuedIsland {
 		fragment := dynFragments.GetFragmentById(island.FragmentID).Get()
 		var requiredResources *Array[string]
 		if fragment != nil {
@@ -204,92 +140,126 @@ func (action *Action) Perform(hwContext hw.HardwireContext, ctx echo.Context) er
 		return true
 	})
 
-	allRequiredResources := NewMap(map[string]bool{})
-	for qi := range qis.Iter() {
+	// if there's only one island to update, do it in the current thread,
+	// don't create new goroutines
+	if queuedIslands.Length() == 1 {
+		qIsland := queuedIslands.At(0)
+		resources := NewMap(map[string]interface{}{})
+		resKeys := NewArray(qIsland.Fragment.ResourceKeys())
+
+		if resKeys.Length() == 1 {
+			res, err := actx.HwContext.GetResource(ctx, resKeys.At(0))
+			if err != nil {
+				return err
+			}
+			resources.Set(resKeys.At(0), res)
+		} else {
+			// if there's more than one resource required, get them in parallel
+			_, errs := utils.InParallel(
+				resKeys.ToSlice(),
+				func(key string) (interface{}, error) {
+					res, err := actx.HwContext.GetResource(ctx, key)
+					if err != nil {
+						return nil, err
+					}
+					resources.Set(key, res)
+					return nil, nil
+				},
+			)
+			if len(errs) > 0 {
+				errMsgs := MapTo(NewArray(errs), func(err error) string {
+					return err.Error()
+				})
+				ctx.Logger().Error(
+					"error occured when obtaining resources",
+					Join(errMsgs, ", "),
+				)
+				return ctx.String(http.StatusInternalServerError, "error occurred when rendering")
+			}
+		}
+
+		html, err := actx.HwContext.BuildFragment(qIsland.Fragment, resources)
+		if err != nil {
+			return err
+		}
+		err = sendIslandUpdate(
+			actx.Echo, atomicWriter, qIsland.Island, html, morphSwap, itemKeys,
+		)
+		return err
+	}
+
+	allRequiredResourcesMap := NewMap(map[string]bool{})
+	for qi := range queuedIslands.Iter() {
 		for resKey := range qi.RequiredResources.Iter() {
-			allRequiredResources.Set(resKey, true)
+			allRequiredResourcesMap.Set(resKey, true)
 		}
 	}
+	allRequiredResources := allRequiredResourcesMap.Keys()
 
-	qisMutex := sync.Mutex{}
+	respMutex := &sync.Mutex{}
 	readyResources := NewMap(map[string]interface{}{})
 
-	renderPossibleIslands := func() *Array[error] {
-		qisMutex.Lock()
-		qisBatch := NewArray([]*QueuedIsland{})
-		qis = qis.Filter(func(qi *QueuedIsland, idx int) bool {
-			if qi.CanRender(readyResources) {
-				qisBatch.Push(qi)
-				return false
-			}
-			return true
-		})
-		qisMutex.Unlock()
-
-		ops := MapTo(qisBatch, func(qi *QueuedIsland) *Promise.Promise[interface{}] {
-			return Promise.New(func() (interface{}, error) {
-				html, err := actx.HwContext.BuildFragment(qi.Fragment, readyResources)
-				if err != nil {
-					ctx.Logger().Errorf(
-						"error building fragment for island (%s): %s",
-						qi.Island.ID, err.Error(),
-					)
-					return nil, err
-				}
-				err = sendFragmentUpdate(qi.Island, html)
-				return nil, err
-			})
-		})
-
-		res := NewArray(*Promise.AwaitAll(ops.ToSlice()))
-		failedRes := res.Filter(func(res Promise.AwaitAllResult[interface{}], i int) bool {
-			return res.Err != nil
-		})
-
-		return MapTo(failedRes, func(res Promise.AwaitAllResult[interface{}]) error {
-			return res.Err
-		})
+	// if there's only one resource to retrieve, get it on the current thread
+	// and render islands in separete goroutines
+	if allRequiredResources.Length() == 1 {
+		resKey := allRequiredResources.At(0)
+		resource, err := actx.HwContext.GetResource(ctx, resKey)
+		if err != nil {
+			return err
+		}
+		readyResources.Set(resKey, resource)
+		errs := renderIslands(
+			actx, respMutex, queuedIslands, readyResources,
+			atomicWriter, morphSwap, itemKeys,
+		)
+		if errs.Length() > 0 {
+			return errors.New("error occurred when rendering some islands")
+		}
+		return nil
 	}
 
-	ops := MapTo(allRequiredResources.Keys(), func(resKey string) *Promise.Promise[interface{}] {
-		return Promise.New(func() (interface{}, error) {
+	// retrive each resource in parallel, for each of them, once it's ready:
+	// renderIslands will pick up all isalnds that can be rendered with resources
+	// currently present, render them, write to the response and flush
+	//
+	// renderIslands will process each island in parallel
+	_, errs := utils.InParallel(
+		allRequiredResources.ToSlice(),
+		func(resKey string) (interface{}, error) {
 			res, err := actx.HwContext.GetResource(ctx, resKey)
 			if err != nil {
 				return nil, err
 			}
 			readyResources.Set(resKey, res)
-			errs := renderPossibleIslands()
+			errs := renderIslands(
+				actx, respMutex, queuedIslands, readyResources,
+				atomicWriter, morphSwap, itemKeys,
+			)
 			if errs.Length() > 0 {
 				return nil, errors.New("error occurred when rendering some islands")
 			}
 			return nil, nil
-		})
+		},
+	)
+
+	errMsgs := MapTo(NewArray(errs), func(err error) string {
+		return err.Error()
 	})
 
-	results := NewArray(*Promise.AwaitAll(ops.ToSlice()))
-	errors := MapTo(results.Filter(func(res Promise.AwaitAllResult[interface{}], i int) bool {
-		return res.Err != nil
-	}), func(res Promise.AwaitAllResult[interface{}]) string {
-		return res.Err.Error()
-	})
-
-	allFailed := results.Length() > 0 && results.Every(func(res Promise.AwaitAllResult[interface{}], i int) bool {
-		return res.Err != nil
-	})
-
+	allFailed := len(errs) == allRequiredResources.Length()
 	if allFailed {
 		ctx.Logger().Error(
 			"error occured when rendering some islands or obtaining resources",
-			Join(errors, ", "),
+			Join(errMsgs, ", "),
 		)
-		return ctx.String(http.StatusInternalServerError, "error occurred when rendering islands")
+		return ctx.String(http.StatusInternalServerError, "error occurred when rendering")
 	}
 
-	someFailed := errors.Length() > 0
+	someFailed := errMsgs.Length() > 0
 	if someFailed {
 		ctx.Logger().Error(
 			"error occured when rendering some islands or obtaining resources",
-			Join(errors, ", "),
+			Join(errMsgs, ", "),
 		)
 		return nil
 	}
