@@ -3,7 +3,7 @@ package utils
 import (
 	"strings"
 
-	. "github.com/ncpa0cpl/convenient-structures"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 func ParseHeaderList(raw string) *Array[string] {

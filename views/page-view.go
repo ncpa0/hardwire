@@ -15,7 +15,7 @@ import (
 
 	// resources "github.com/ncpa0/hardwire/resource-provider"
 	"github.com/ncpa0/hardwire/utils"
-	. "github.com/ncpa0cpl/convenient-structures"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 type PageView struct {
@@ -267,10 +267,7 @@ func (node *NodeProxy) Render(hw HardwireContext, c echo.Context) (*RenderedView
 	if node.parentRoot.isDynamic {
 		templateData := NewMap(map[string]interface{}{})
 
-		resIterator := node.parentRoot.requiredResources.Iterator()
-		for !resIterator.Done() {
-			entry, _ := resIterator.Next()
-
+		for entry := range node.parentRoot.requiredResources.Iter() {
 			handler, err := hw.GetResourceHandler(c, entry.Value)
 			if err != nil {
 				return nil, err

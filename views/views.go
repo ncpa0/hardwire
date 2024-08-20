@@ -9,7 +9,7 @@ import (
 	config "github.com/ncpa0/hardwire/configuration"
 	templatebuilder "github.com/ncpa0/hardwire/template-builder"
 	"github.com/ncpa0/hardwire/utils"
-	. "github.com/ncpa0cpl/convenient-structures"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 func IsTemplate(filepath string) bool {

@@ -8,6 +8,7 @@ import (
 	hw "github.com/ncpa0/hardwire/hw-context"
 	resources "github.com/ncpa0/hardwire/resources"
 	"github.com/ncpa0/hardwire/utils"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 type HwContext struct{}
@@ -26,32 +27,32 @@ func (ctx *HwContext) GetResourceHandler(e echo.Context, resourceKey string) (fu
 	}, nil
 }
 
-func (ctx *HwContext) BuildFragment(ectx echo.Context, fragment hw.BuildableFragment) (string, error) {
-	resKey := fragment.ResourceKeys()[0]
-	isValidResource := resources.HasResource(resKey)
-
-	if !isValidResource {
-		return "", errors.New("resource not found")
+func (ctx *HwContext) GetResource(ectx echo.Context, resourceKey string) (interface{}, error) {
+	handler, err := ctx.GetResourceHandler(ectx, resourceKey)
+	if err != nil {
+		return nil, err
 	}
 
 	routePathname := ectx.Request().Header.Get("Hardwire-Dynamic-Fragment-Request")
 	if routePathname == "" {
-		return "", errors.New("bad request")
+		return nil, errors.New("missing hardwire header")
 	}
-
 	hxCurrentUrl := ectx.Request().Header.Get("Hx-Current-Url")
 	params := utils.ParseUrlParams(routePathname, hxCurrentUrl)
-
-	handler, err := HardwireContext.GetResourceHandler(ectx, resKey)
-	if err != nil {
-		return "", err
-	}
 
 	resource, err := handler(routePathname, params)
 	if err != nil {
 		return "", err
 	}
-	if resource == nil {
+
+	return resource, nil
+}
+
+func (ctx *HwContext) BuildFragment(fragment hw.BuildableFragment, resources *Map[string, interface{}]) (string, error) {
+	resKey := fragment.ResourceKeys()[0]
+
+	resource, ok := resources.Get(resKey)
+	if !ok || resource == nil {
 		return "", errors.New("resource not found")
 	}
 

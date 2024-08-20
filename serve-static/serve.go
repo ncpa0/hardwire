@@ -10,7 +10,7 @@ import (
 
 	echo "github.com/labstack/echo/v4"
 	"github.com/ncpa0/hardwire/utils"
-	. "github.com/ncpa0cpl/convenient-structures"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 type StaticFile struct {
@@ -219,9 +219,7 @@ func Serve(server *echo.Echo, baseUrl string, root string, conf *Configuration) 
 
 	server.GET(baseUrl+"/*", func(c echo.Context) error {
 		routePath := c.Param("*")
-		sfIterator := staticFiles.Iterator()
-		for !sfIterator.Done() {
-			file, _ := sfIterator.Next()
+		for file := range staticFiles.Iter() {
 			if file.RelPath == routePath {
 				file.Revalidate()
 				return sendFile(file, c, conf)

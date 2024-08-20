@@ -2,7 +2,7 @@ package views
 
 import (
 	"github.com/ncpa0/hardwire/utils"
-	. "github.com/ncpa0cpl/convenient-structures"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 type DynamicFragmentViewRegistry struct {
@@ -20,9 +20,7 @@ func (vr *DynamicFragmentViewRegistry) Register(view *DynamicFragmentView) {
 }
 
 func (vr *DynamicFragmentViewRegistry) GetFragmentById(id string) *utils.Option[DynamicFragmentView] {
-	viewsIterator := vr.views.Iterator()
-	for !viewsIterator.Done() {
-		view, _ := viewsIterator.Next()
+	for view := range vr.views.Iter() {
 		if view.id == id {
 			return utils.NewOption(view)
 		}
@@ -32,9 +30,7 @@ func (vr *DynamicFragmentViewRegistry) GetFragmentById(id string) *utils.Option[
 }
 
 func (vr *DynamicFragmentViewRegistry) GetFragment(routePathname string) *utils.Option[DynamicFragmentView] {
-	viewsIterator := vr.views.Iterator()
-	for !viewsIterator.Done() {
-		view, _ := viewsIterator.Next()
+	for view := range vr.views.Iter() {
 		if view.MatchesRoute(routePathname) {
 			return utils.NewOption(view)
 		}
@@ -44,9 +40,7 @@ func (vr *DynamicFragmentViewRegistry) GetFragment(routePathname string) *utils.
 }
 
 func (vr *DynamicFragmentViewRegistry) ForEach(cb func(view *DynamicFragmentView) error) error {
-	viewsIterator := vr.views.Iterator()
-	for !viewsIterator.Done() {
-		view, _ := viewsIterator.Next()
+	for view := range vr.views.Iter() {
 		err := cb(view)
 		if err != nil {
 			return err

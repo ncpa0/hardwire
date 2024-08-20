@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ncpa0/hardwire/utils"
-	. "github.com/ncpa0cpl/convenient-structures"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 type Island struct {

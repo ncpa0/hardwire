@@ -15,8 +15,10 @@ github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovk
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
-github.com/ncpa0cpl/convenient-structures v0.0.0-20231127113943-08d3c9127a1a h1:QWloo3Ow8y3vyAoa5mEpOdtp+SHfeGnpt3211vQcL0E=
-github.com/ncpa0cpl/convenient-structures v0.0.0-20231127113943-08d3c9127a1a/go.mod h1:V0cw/tcR5CylWFP1TKRpotLHtCANzD0cPWpvt3m8woU=
+github.com/ncpa0cpl/ezs v0.0.0-20240814171049-7b5eb41ba2ae h1:RdFT7DfJwR92Ava8X2WcMxscqHHAIYX5t6mlI+yDEns=
+github.com/ncpa0cpl/ezs v0.0.0-20240814171049-7b5eb41ba2ae/go.mod h1:ZbYbfhHg7VJlGbqkEd3kBn7JEoAOGIv2VxwGvR8KovQ=
+github.com/ncpa0cpl/go_promise v0.0.0-20230929140052-08616f2b7968 h1:aQcAy4Al8/OQQJsoHdhF2tqqi38RS8TG+hvKlf5OM9w=
+github.com/ncpa0cpl/go_promise v0.0.0-20230929140052-08616f2b7968/go.mod h1:nhZXua8m39omH/NHYzkaU5wSrIEu6wbw83s7FMk0QQQ=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=

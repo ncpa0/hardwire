@@ -10,6 +10,7 @@ import (
 	hw "github.com/ncpa0/hardwire/hw-context"
 	"github.com/ncpa0/hardwire/utils"
 	"github.com/ncpa0/hardwire/views"
+	"github.com/ncpa0cpl/ezs"
 )
 
 type ActionContext struct {
@@ -98,7 +99,19 @@ func (actx *ActionContext) UpdateIslands(islandsIDs ...string) {
 			return
 		}
 
-		html, err := actx.HwContext.BuildFragment(actx.Echo, fragment.Get())
+		requiredResources := fragment.Get().ResourceKeys()
+		resources := ezs.NewMap(map[string]interface{}{})
+
+		for _, resourceKey := range requiredResources {
+			res, err := actx.HwContext.GetResource(actx.Echo, resourceKey)
+			if err != nil {
+				actx.Echo.Logger().Error("error getting resource: ", err)
+				return
+			}
+			resources.Set(resourceKey, res)
+		}
+
+		html, err := actx.HwContext.BuildFragment(fragment.Get(), resources)
 		if err != nil {
 			actx.Echo.Logger().Error("error building fragment: ", err)
 			return

@@ -2,7 +2,7 @@ package views
 
 import (
 	"github.com/ncpa0/hardwire/utils"
-	. "github.com/ncpa0cpl/convenient-structures"
+	. "github.com/ncpa0cpl/ezs"
 )
 
 type PageViewRegistry struct {
@@ -20,9 +20,7 @@ func (vr *PageViewRegistry) Register(view *PageView) {
 }
 
 func (vr *PageViewRegistry) GetView(routePathname string) *utils.Option[PageView] {
-	viewIterator := vr.views.Iterator()
-	for !viewIterator.Done() {
-		view, _ := viewIterator.Next()
+	for view := range vr.views.Iter() {
 		if view.MatchesRoute(routePathname) {
 			return utils.NewOption(view)
 		}
@@ -32,9 +30,7 @@ func (vr *PageViewRegistry) GetView(routePathname string) *utils.Option[PageView
 }
 
 func (vr *PageViewRegistry) ForEach(cb func(view *PageView) error) error {
-	viewIterator := vr.views.Iterator()
-	for !viewIterator.Done() {
-		view, _ := viewIterator.Next()
+	for view := range vr.views.Iter() {
 		err := cb(view)
 		if err != nil {
 			return err
