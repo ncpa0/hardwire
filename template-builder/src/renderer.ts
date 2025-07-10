@@ -138,18 +138,12 @@ class BaseHtmlGenerator {
   }
 }
 
-const NBSP = String.fromCharCode(160);
-
 class HtmlCompactGenerator
   extends BaseHtmlGenerator
   implements ElementGenerator<string | Promise<string>>
 {
   createTextNode(text: string | number | bigint): string {
-    return String(text)
-      .replaceAll(">", "&gt;")
-      .replaceAll("<", "&lt;")
-      .replaceAll("&", "&amp;")
-      .replaceAll(NBSP, "&nbsp;");
+    return String(text);
   }
 
   createElement(

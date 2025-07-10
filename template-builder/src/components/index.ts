@@ -19,6 +19,7 @@ import { Script } from "./script";
 import { Style } from "./style";
 import { $islandList } from "./dynamic-list";
 import { Html } from "./html";
+import { Meta } from "./meta";
 
 export const GLOBALS = {
   Switch,
@@ -29,6 +30,7 @@ export const GLOBALS = {
   Style,
   Head,
   Html,
+  Meta,
   DynamicFragment,
   If,
   MapArray,
@@ -69,6 +71,12 @@ declare global {
   const Style: typeof GLOBALS.Style;
   const Head: typeof GLOBALS.Head;
   const Html: typeof GLOBALS.Html;
+  /**
+   * Do not use within islands or dynamic fragments.
+   *
+   * Adds a meta tag to the root of the page.
+   */
+  const Meta: typeof GLOBALS.Meta;
   const DynamicFragment: typeof GLOBALS.DynamicFragment;
   const If: typeof GLOBALS.If;
   const MapArray: typeof GLOBALS.MapArray;

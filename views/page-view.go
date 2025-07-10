@@ -28,6 +28,7 @@ type PageView struct {
 	queryCache        *Map[string, *NodeProxy]
 	queryAllCache     *Map[string, *Array[*NodeProxy]]
 	document          *NodeProxy
+	head              *NodeProxy
 	Metadata          *pageMetafile
 }
 
@@ -135,6 +136,15 @@ func NewPageView(root string, filepath string) (*PageView, error) {
 	}
 
 	view.document.parentRoot = view
+
+	headNode := xmlquery.FindOne(doc, "//head")
+	if headNode != nil {
+		view.head = &NodeProxy{
+			parentRoot: view,
+			node:       headNode,
+			raw:        utils.XmlNodeToString(headNode),
+		}
+	}
 
 	return view, nil
 }
@@ -252,9 +262,9 @@ func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 }
 
 type RenderedView struct {
-	Html      string
-	Etag      string
-	PageTitle string
+	Html string
+	Etag string
+	Head string
 }
 
 func (v *PageView) Render(hw HardwireContext, c echo.Context) (*RenderedView, error) {
@@ -300,9 +310,12 @@ func (node *NodeProxy) Render(hw HardwireContext, c echo.Context) (*RenderedView
 	}
 
 	result := RenderedView{
-		Html:      rawHtml,
-		Etag:      etag,
-		PageTitle: node.parentRoot.title,
+		Html: rawHtml,
+		Etag: etag,
+	}
+
+	if node.parentRoot.head != nil {
+		result.Head = node.parentRoot.head.raw
 	}
 
 	return &result, nil

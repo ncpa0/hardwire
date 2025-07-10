@@ -25,6 +25,7 @@
   "peerDependencies": {},
   "dependencies": {
     "esbuild": "^0.20.1",
+    "htmx-ext-head-support": "^2.0.4",
     "htmx.ext...chunked-transfer": "^1.0.4",
     "idiomorph": "^0.3.0",
     "jsxte": "~3.3.1",

@@ -1,7 +1,6 @@
 package hardwire
 
 import (
-	"fmt"
 	"net/http"
 
 	echo "github.com/labstack/echo/v4"
@@ -33,8 +32,8 @@ func createResponse(c echo.Context, view View) error {
 	}
 
 	respHtml := renderResult.Html
-	if boosted && renderResult.PageTitle != "" {
-		respHtml = fmt.Sprintf("<title>%s</title>\n\n%s", renderResult.PageTitle, respHtml)
+	if boosted && renderResult.Head != "" {
+		respHtml = renderResult.Head + "\n\n" + respHtml
 	}
 
 	return c.HTML(http.StatusOK, "<!DOCTYPE html>\n"+respHtml)
