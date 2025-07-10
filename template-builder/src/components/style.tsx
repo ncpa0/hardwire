@@ -3,6 +3,7 @@ import esbuild from "esbuild";
 import type { ComponentApi } from "jsxte";
 import path from "node:path";
 import { builderCtx } from "../contexts";
+import { escapeHTML } from "bun";
 
 const IS_PROD = process.env.NODE_ENV !== "development";
 
@@ -106,7 +107,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   }
 
   const result = transform({
-    code: Buffer.from(stylesheet),
+    code: Buffer.from(stylesheet) as any,
     filename: filepath,
     minify: IS_PROD,
     sourceMap: !IS_PROD,
@@ -118,7 +119,7 @@ export const Style = async (props: StyleProps, componentApi: ComponentApi) => {
   }
 
   if (props.inline) {
-    return <style {...(props.styleAttrs ?? {})}>{contents}</style>;
+    return <style {...(props.styleAttrs ?? {})}>{escapeHTML(contents)}</style>;
   }
 
   const src = extFiles.register(

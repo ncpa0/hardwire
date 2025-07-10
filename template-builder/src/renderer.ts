@@ -1,10 +1,10 @@
+import { escapeHTML } from "bun";
 import {
   ComponentApi,
   ElementGenerator,
   JsxteRenderer,
   JsxteRenderError,
 } from "jsxte";
-import { sanitizeForHtml } from "./utils/sanitize-for-html";
 
 const SELF_CLOSING_TAG_LIST = [
   "area",
@@ -39,7 +39,7 @@ const attributeToHtmlTagString = ([key, value]: [
   ) {
     return "";
   }
-  return `${key}="${sanitizeForHtml(String(value))}"`;
+  return `${key}="${escapeHTML(String(value))}"`;
 };
 
 const mapAttributesToHtmlTagString = (attributes: [string, any][]): string => {

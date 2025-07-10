@@ -1,4 +1,4 @@
-import { BuildConfig } from "bun";
+import { BuildConfig, escapeHTML } from "bun";
 import { ComponentApi } from "jsxte";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -29,6 +29,49 @@ type ScriptPropsBase = {
   buildOptions?: BuildConfig;
 };
 
+export type PkgOpt = {
+  name: string;
+  /** If specified, the default export of this package will be assigned to a global variable with this name. */
+  global?: string;
+};
+
+class Pkg {
+  #name: string;
+  #strippedName: string;
+  #global?: string;
+
+  constructor(opt: string | PkgOpt) {
+    if (typeof opt == "string") {
+      this.#name = opt;
+    } else {
+      this.#name = opt.name;
+      this.#global = opt.global;
+    }
+
+    this.#strippedName = this.#name.replace(/[^a-zA-Z0-9]/g, "");
+  }
+
+  name() {
+    return this.#name;
+  }
+
+  strippedName() {
+    return this.#strippedName;
+  }
+
+  async import(rootDir: string) {
+    const modulePath = await Bun.resolve(this.#name, rootDir);
+
+    if (this.#global) {
+      return [
+        `import _${this.#strippedName} from "${modulePath}";`,
+        `window.${this.#global} = _${this.#strippedName};`,
+      ].join("\n");
+    }
+    return `import "${modulePath}";`;
+  }
+}
+
 export type ScriptProps = ScriptPropsBase &
   (
     | {
@@ -41,7 +84,7 @@ export type ScriptProps = ScriptPropsBase &
       }
     | {
         path?: never;
-        package: string;
+        package: string | PkgOpt | Array<string | PkgOpt>;
         children?: never;
         embed?: never;
         inline?: boolean;
@@ -71,9 +114,19 @@ export const Script = async (
 
   const { type, onLoad = () => {}, buildOptions } = props;
 
+  const pkgs = props.package
+    ? Array.isArray(props.package)
+      ? props.package.map((opt) => new Pkg(opt))
+      : new Pkg(props.package)
+    : undefined;
+
   let name: string = "";
-  if (props.package) {
-    name = props.package;
+  if (pkgs) {
+    if (Array.isArray(pkgs)) {
+      name = pkgs.map((p) => p.strippedName()).join("_");
+    } else {
+      name = pkgs.strippedName();
+    }
   } else if (props.path) {
     name = path.basename(props.path!);
   }
@@ -99,9 +152,26 @@ export const Script = async (
 
   if (props.path) {
     config.entrypoints = [path.join(props.dirname, props.path)];
-  } else if (props.package) {
-    const modulePath = await Bun.resolve(props.package!, builder.entrypointDir);
-    config.entrypoints = [modulePath];
+  } else if (pkgs) {
+    let tmpFileContent = "";
+
+    if (Array.isArray(pkgs)) {
+      tmpFileContent = (
+        await Promise.all(
+          pkgs.map(async (p) => await p.import(builder.entrypointDir)),
+        )
+      ).join("\n");
+    } else {
+      tmpFileContent = await pkgs.import(builder.entrypointDir);
+    }
+
+    const tmpdir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "template-builder-js"),
+    );
+    const tmpFile = path.join(tmpdir, `${generateRandomName()}.ts`);
+    await Bun.write(tmpFile, tmpFileContent);
+    config.entrypoints = [tmpFile];
+    config.root = builder.entrypointDir;
   } else if (props.embed && props.children) {
     const tmpdir = await fs.mkdtemp(
       path.join(os.tmpdir(), "template-builder-js"),
@@ -113,7 +183,6 @@ export const Script = async (
         ? props.children.map((n) => n.text).join("\n")
         : props.children.text,
     );
-    console.debug(props.children);
     config.entrypoints = [tmpFile];
   }
 
@@ -142,12 +211,12 @@ export const Script = async (
   if (props.inline) {
     return (
       <script type={type === "module" ? "module" : "text/javascript"}>
-        {contents}
+        {escapeHTML(contents)}
       </script>
     );
   }
 
-  const src = extFiles.register(contents, name, "js");
+  const src = extFiles.register(contents, name, "js", { keepName: true });
 
   return (
     <script type={type === "module" ? "module" : "text/javascript"} src={src} />

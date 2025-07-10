@@ -6,8 +6,8 @@ type ParsedVars<T extends Record<string, Types>> = {
   [K in keyof T]: T[K] extends "string"
     ? string
     : T[K] extends "number"
-    ? number
-    : boolean;
+      ? number
+      : boolean;
 };
 
 type CmdEntry = {
@@ -42,7 +42,7 @@ export class Argv {
 
     if (this.cmds.length) {
       const longestCmdName = Math.max(
-        ...this.cmds.map((cmd) => cmd.name.length)
+        ...this.cmds.map((cmd) => cmd.name.length),
       );
 
       out.write("COMMANDS:\n");
@@ -65,7 +65,7 @@ export class Argv {
   registerCommand<R extends Record<string, Types>>(
     name: string,
     required: R,
-    cb: (vars: ParsedVars<R>, argv: Argv) => void
+    cb: (vars: ParsedVars<R>, argv: Argv) => void,
   ) {
     const entry: CmdEntry = { name, required, cb };
     this.cmds.push(entry);
@@ -100,13 +100,13 @@ export class Argv {
 
       if (typeof value !== type) {
         return this.error(
-          `Invalid type for argument ${name}: expected ${type}, got ${typeof value}`
+          `Invalid type for argument ${name}: expected ${type}, got ${typeof value}`,
         );
       }
     }
 
     const parsedVars = Object.fromEntries(
-      requiredVars.map(([name, type]) => [name, this.parsed[name]])
+      requiredVars.map(([name]) => [name, this.parsed[name]]),
     );
 
     return matchingCmd.cb(parsedVars, this);
