@@ -1,6 +1,5 @@
 import { builderCtx } from "../contexts";
 import { SetupClientHelpers } from "./_helpers.client";
-import { HeadProps as InternalHeadProps } from "./head";
 import { ComponentApi, defineContext } from "jsxte";
 
 export type HtmlProps = JSXTE.PropsWithChildren<{

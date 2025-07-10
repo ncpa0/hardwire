@@ -1,4 +1,4 @@
-import { ComponentApi } from "jsxte";
+import { ComponentApi, HTMLProps } from "jsxte";
 import { builderCtx } from "../contexts";
 import { render } from "../renderer";
 import { structProxy } from "./gotmpl-generator/generate-go-templ";
@@ -6,10 +6,7 @@ import { structProxy } from "./gotmpl-generator/generate-go-templ";
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      "dynamic-fragment": {
-        class?: string | ValueProxy<string>;
-        children?: JSX.Element;
-      };
+      "dynamic-fragment": HTMLProps<{}>;
     }
   }
 }
@@ -35,10 +32,11 @@ export const DynamicFragment = async <T,>(
   compApi: ComponentApi,
 ) => {
   const bldr = compApi.ctx.getOrFail(builderCtx);
+  const fragContent = props.render(structProxy("$frag_root"));
   const templ = await render(
     <dynamic-fragment id={props.id} class={props.class}>
       {`{{$frag_root := .}}`}
-      {props.render(structProxy("$frag_root"))}
+      {fragContent}
     </dynamic-fragment>,
     compApi,
   );
