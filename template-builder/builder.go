@@ -120,7 +120,14 @@ func initProject(srcpath string) error {
 		pkgJson := PackageJson{
 			Name: "page-templates",
 			DevDependencies: map[string]string{
-				"typescript": "latest",
+				"esbuild":                     "^0.20.1",
+				"htmx.org":                    "^2.0.6",
+				"htmx-ext-head-support":       "^2.0.4",
+				"htmx.ext...chunked-transfer": "^2.1.1",
+				"idiomorph":                   "^0.7.3",
+				"jsxte":                       "^3.3.1",
+				"lightningcss":                "^1.26.0",
+				"typescript":                  "latest",
 			},
 			Main: "index.tsx",
 		}
