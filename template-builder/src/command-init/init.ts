@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import path from "node:path";
 import { ftmpl } from "../utils/ftmpl";
 
@@ -19,33 +19,21 @@ const TSCONFIG_TEMPLATE = JSON.stringify(
   2,
 );
 const CSS_TEMPLATE = ftmpl`
-* {
-  min-width: 0;
-}
-
 body {
   margin: unset;
   min-height: 100vh;
-  min-width: 100vw;
 }
-
-#root {
-  display: flex;
-  flex-direction: column;
-}`;
+`;
 const INDEX_TEMPLATE = ftmpl`
 import "hardwire-html-generator";
 
 export default function App() {
   return (
-    <Html
-      headContent={(
-        <>
-          <Style dirname={import.meta.dir} path="./style.css" />
-          <Script dirname={import.meta.dir} path="./index.client.ts" />
-        </>
-      )}
-    >
+    <Html nochunked>
+      <Head>
+        <Style dirname={import.meta.dir} path="./style.css" />
+        <Script dirname={import.meta.dir} path="./index.client.ts" />
+      </Head>
       <div id="root">
         <nav>
           <ul>
@@ -64,26 +52,26 @@ export default function App() {
 
 export async function initCmd(wd: string) {
   const bunfigPath = path.join(wd, "bunfig.toml");
-  if (!(await fs.exists(bunfigPath))) {
+  if (!fs.existsSync(bunfigPath)) {
     await Bun.write(bunfigPath, BUNFIG_TEMPLATE);
   }
 
   const indexPath = path.join(wd, "index.tsx");
-  if (!(await fs.exists(indexPath))) {
+  if (!fs.existsSync(indexPath)) {
     await Bun.write(indexPath, INDEX_TEMPLATE);
 
     const tsconfigPath = path.join(wd, "tsconfig.json");
-    if (!(await fs.exists(tsconfigPath))) {
+    if (!fs.existsSync(tsconfigPath)) {
       await Bun.write(tsconfigPath, TSCONFIG_TEMPLATE);
     }
 
     const stylePath = path.join(wd, "style.css");
-    if (!(await fs.exists(stylePath))) {
+    if (!fs.existsSync(stylePath)) {
       await Bun.write(stylePath, CSS_TEMPLATE);
     }
 
     const indexClientPath = path.join(wd, "index.client.ts");
-    if (!(await fs.exists(indexClientPath))) {
+    if (!fs.existsSync(indexClientPath)) {
       await Bun.write(indexClientPath, "");
     }
   }

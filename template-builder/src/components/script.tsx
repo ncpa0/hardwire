@@ -26,7 +26,7 @@ type ScriptPropsBase = {
    */
   type?: "module";
   onLoad?: (contents: string) => string | undefined;
-  buildOptions?: BuildConfig;
+  buildOptions?: Partial<BuildConfig>;
 };
 
 export type PkgOpt = {

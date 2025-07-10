@@ -263,7 +263,7 @@ const InternalHead: JSXTE.Component<InternalHeadProps> = (
         break;
       }
       case "head-support": {
-        packages.push("htmx-ext-head-support");
+        packages.push("htmx-ext-head-support/head-support.js");
         break;
       }
     }
