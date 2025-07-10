@@ -1,6 +1,7 @@
 package hardwire
 
 import (
+	"fmt"
 	"net/http"
 
 	echo "github.com/labstack/echo/v4"
@@ -15,6 +16,7 @@ type View interface {
 }
 
 func createResponse(c echo.Context, view View) error {
+	boosted := c.Request().Header.Get("hx-boosted") == "true"
 	ifNoneMatch := c.Request().Header.Get("If-None-Match")
 	renderResult, err := view.Render(HardwireContext, c)
 
@@ -30,7 +32,12 @@ func createResponse(c echo.Context, view View) error {
 		c.Response().Header().Set("ETag", renderResult.Etag)
 	}
 
-	return c.HTML(http.StatusOK, "<!DOCTYPE html>\n"+renderResult.Html)
+	respHtml := renderResult.Html
+	if boosted && renderResult.PageTitle != "" {
+		respHtml = fmt.Sprintf("<title>%s</title>\n\n%s", renderResult.PageTitle, respHtml)
+	}
+
+	return c.HTML(http.StatusOK, "<!DOCTYPE html>\n"+respHtml)
 }
 
 func createPageViewHandler(view *views.PageView, conf *config.Configuration) func(c echo.Context) error {

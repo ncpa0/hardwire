@@ -252,8 +252,9 @@ func (v *PageView) QuerySelectorAll(selector string) []*NodeProxy {
 }
 
 type RenderedView struct {
-	Html string
-	Etag string
+	Html      string
+	Etag      string
+	PageTitle string
 }
 
 func (v *PageView) Render(hw HardwireContext, c echo.Context) (*RenderedView, error) {
@@ -299,8 +300,9 @@ func (node *NodeProxy) Render(hw HardwireContext, c echo.Context) (*RenderedView
 	}
 
 	result := RenderedView{
-		Html: rawHtml,
-		Etag: etag,
+		Html:      rawHtml,
+		Etag:      etag,
+		PageTitle: node.parentRoot.title,
 	}
 
 	return &result, nil
